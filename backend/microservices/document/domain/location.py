@@ -1,14 +1,8 @@
+import dataclasses
 import typing
 
 
-LocationPositionType = typing.Union[int, str]
-
-
+@dataclasses.dataclass(frozen=True)
 class Location:
-
-    def __init__(self, position: LocationPositionType):
-        self._position = position
-
-    @property
-    def position(self):
-        return self._position
+    container: typing.Any
+    position: typing.Union[int, str]
