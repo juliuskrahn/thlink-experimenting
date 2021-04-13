@@ -10,7 +10,7 @@ class ContentType(enum.Enum):
 class Content:
 
     def __init__(self, value, content_type: ContentType):
-        self._value = value
+        self.value = value
         self._type = ContentType[content_type]
     
     @property
