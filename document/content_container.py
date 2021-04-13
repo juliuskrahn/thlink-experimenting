@@ -1,5 +1,5 @@
-from . import Content
-from ..links import Linkable, Links
+from .content import Content
+from .links import Linkable, Links
 
 
 class ContentContainer(Linkable):

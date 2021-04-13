@@ -1,4 +1,5 @@
-from .content import Content, ContentContainer
+from .content import Content
+from .content_container import ContentContainer
 from .links import Links
 from .highlights import Highlights, DocumentHighlightsPolicy
 import typing

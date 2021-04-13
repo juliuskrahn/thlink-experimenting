@@ -1,12 +1,15 @@
 from . import Document
-from .content import Content, ContentContainer
+from .content import Content
+from .content_container import ContentContainer
 from .links import Linkable, Links
+from .location import Location, LocationPositionType
 import typing
 
 
-class BaseHighlight:
+class BaseHighlight(Location):
 
-    def __init__(self, id_: str):
+    def __init__(self, id_: str, position: LocationPositionType):
+        super().__init__(position)
         self._id = id_
 
     @property
@@ -16,8 +19,8 @@ class BaseHighlight:
 
 class Highlight(BaseHighlight, Linkable):
 
-    def __init__(self, id_: str, backlinks):
-        super().__init__(id_)
+    def __init__(self, id_: str, position: LocationPositionType, backlinks):
+        super().__init__(id_, position)
         super(BaseHighlight, self).__init__(backlinks)
 
     def to_note(self):
@@ -26,9 +29,9 @@ class Highlight(BaseHighlight, Linkable):
 
 class Note(BaseHighlight, ContentContainer):
 
-    def __init__(self, id_: str, backlinks, content: Content):
-        super().__init__(id_)
-        super(BaseHighlight, self).__init__(
+    def __init__(self, id_: str, position: LocationPositionType, backlinks, content: Content):
+        super().__init__(id_, position)
+        super(Location, self).__init__(
             content,
             Links.from_content(content),
             backlinks

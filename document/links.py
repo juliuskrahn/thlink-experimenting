@@ -1,4 +1,6 @@
-from .content import Content, ContentContainer, ContentLinkParserService
+from .content import Content, ContentLinkParserService
+from .content_container import ContentContainer
+from .location import Location
 import dataclasses
 import typing
 
@@ -10,26 +12,22 @@ class Linkable:
         self.backlinks = backlinks
 
 
-class LinkSource:
+class LinkLocation(Location):
 
-    def __init__(self, container: ContentContainer, location: typing.Union[int, str]):
+    def __init__(self, container: ContentContainer, position: typing.Union[int, str]):
+        super().__init__(position)
         self._container = container
-        self._location = location  # managed by app
 
     @property
     def container(self):
         return self._container
 
-    @property
-    def location(self):
-        return self._location
-
 
 @dataclasses.dataclass(frozen=True)
-class Link:
+class Link:  # TODO living document link (/ note) -> no id ?
     id_: str
-    source: LinkSource
-    target: Linkable
+    location: LinkLocation
+    to: Linkable
 
 
 class Links(dict):
@@ -41,4 +39,5 @@ class Links(dict):
 
     @classmethod
     def from_content(cls, content: Content):
-        return cls(ContentLinkParserService().parse(content))
+        list_ = [Link() for raw in ContentLinkParserService().parse(content)]
+        return cls(list_)
