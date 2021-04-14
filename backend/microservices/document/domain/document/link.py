@@ -8,7 +8,7 @@ import domain
 @dataclasses.dataclass(frozen=True)
 class LinkPreview:
     title: str
-    description: str
+    description: typing.Optional[str]
 
 
 class LinkReference(abc.ABC):
@@ -64,7 +64,7 @@ class LinkTarget(LinkReference):
         pass
 
 
-class Link(lib.Entity, domain.document.AbstractContentLocatable):
+class Link(lib.Entity, domain.document.ContentLocatable):
 
     def __init__(self,
                  id_: lib.Id,
@@ -116,11 +116,11 @@ class Link(lib.Entity, domain.document.AbstractContentLocatable):
     def target_preview(self):
         return self._target_preview
 
-    def apply_target_preview_update(self):
+    def apply_target_preview_update(self):  # TODO parent needs to be saved
         self._target_preview = self._target.link_preview
 
     def _info(self):
-        return f"id='{self._id}', " \
+        return f"id='{self.id}', " \
                f"source='{self.source}', " \
                f"location='{self.location}', " \
                f"target='{self.target}'"
