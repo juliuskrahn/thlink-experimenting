@@ -26,10 +26,10 @@ class Highlight(lib.Entity,
 
         self._document = document
         self._content = content
-        link_preview_description = None
+        link_preview_text = None
         if self.content:
-            link_preview_description = self.content.data
-        self._link_preview = domain.document.link.LinkPreview(self.document.title, link_preview_description)
+            link_preview_text = self.content.data
+        self._link_preview = domain.document.link.LinkPreview(link_preview_text, self.document.link_preview)
 
         if links is None:
             links = []
@@ -64,6 +64,10 @@ class Highlight(lib.Entity,
     @content.setter
     def content(self, content: typing.Optional[domain.document.Content]):
         self._content = content
+        link_preview_text = None
+        if content:
+            link_preview_text = content.data
+        self._link_preview.text = link_preview_text
         if not HighlightLinkSourcePolicy.is_satisfied_by(self):
             for link in self.links:
                 link.delete()

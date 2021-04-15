@@ -36,7 +36,7 @@ class Document(lib.Entity,
         for link in self.links:
             link.delete()
         for link in self.backlinks:
-            link.delete()  # TODO mark as broken
+            link.broken = True
 
     @property
     def deleted(self):
@@ -49,7 +49,7 @@ class Document(lib.Entity,
     @title.setter
     def title(self, title: str):
         self._title = title
-        self._link_preview.title = title
+        self._link_preview.text = title
 
     @property
     def link_preview(self):

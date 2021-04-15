@@ -13,6 +13,7 @@ class Link(domain.document.content.ContentLocatable, lib.Entity):
                  source: LinkSource,
                  location: domain.document.content.ContentLocation,
                  target: LinkTarget,
+                 broken=False,
                  ):
         super().__init__(location)
         super(domain.document.content.ContentLocatable, self).__init__(id_)
@@ -21,6 +22,7 @@ class Link(domain.document.content.ContentLocatable, lib.Entity):
         self._target = target
         self._source_preview = self.source.link_preview
         self._target_preview = self.target.link_preview
+        self.broken = broken
         self._deleted = False
 
     @classmethod
@@ -68,8 +70,8 @@ class Link(domain.document.content.ContentLocatable, lib.Entity):
 
 @dataclasses.dataclass()
 class LinkPreview:
-    title: str
-    sub_title: typing.Optional[str]
+    text: typing.Optional[str]
+    parent: typing.Optional[LinkPreview]
 
 
 class LinkReference(abc.ABC):
