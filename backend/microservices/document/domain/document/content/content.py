@@ -22,7 +22,9 @@ class ContentContainer(abc.ABC):
 
 class ContentLocatable:
 
-    @abc.abstractmethod
+    def __init__(self, location: ContentLocation):
+        self._location = location
+
     @property
-    def location(self) -> ContentLocation:
-        pass
+    def location(self):
+        return self._location

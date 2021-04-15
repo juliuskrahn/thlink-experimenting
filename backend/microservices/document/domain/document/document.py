@@ -1,26 +1,45 @@
 import typing
 import lib
-import domain.document
+import domain.document.content
+import domain.document.link
 
 
-class Document(lib.Entity, domain.document.ContentContainer, domain.document.LinkTarget):  # TODO
+class Document(lib.Entity,
+               domain.document.link.Node,
+               domain.document.content.ContentContainer,
+               ):
 
     def __init__(self,
                  id_: lib.Id,
                  title: str,
-                 tags: typing.List[str],
                  content: domain.document.Content,
-                 links: typing.List[domain.document.Link],
-                 backlinks: typing.FrozenSet[domain.document.Link],
-                 highlights: typing.List[domain.document.Highlight],
+                 links: typing.List[domain.document.link.Link],
+                 backlinks: typing.List[domain.document.link.Link],
+                 highlights
                  ):
-        super().__init__(id_)
-        self.title = title
-        self.tags = tags
+
+        lib.Entity.__init__(self, id_)
+
+        self._title = title
         self._content = content
-        self.links = links
-        self._backlinks = backlinks
-        self.highlights = highlights
+        self._link_preview = domain.document.link.LinkPreview(self.title, None)
+
+        domain.document.link.Node.__init__(self, links, backlinks)
+
+        self._highlights = highlights
+
+    @property
+    def title(self):
+        return self._title
+
+    @title.setter
+    def title(self, title: str):
+        self._title = title
+        self._link_preview.title = title
+
+    @property
+    def link_preview(self):
+        return self._link_preview
 
     @property
     def content(self):
@@ -32,12 +51,12 @@ class Document(lib.Entity, domain.document.ContentContainer, domain.document.Lin
                        highlights: typing.List[domain.document.Highlight],
                        ):
         self._content = content
-        self.links = links
-        self.highlights = highlights
+        self._links = links
+        self._highlights = highlights
 
     @property
-    def backlinks(self):
-        return self._backlinks
+    def highlights(self):
+        return self._highlights
 
     def _info(self):
         return f"id='{self._id}', title='{self.title}'"

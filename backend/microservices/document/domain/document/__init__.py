@@ -1,4 +1,4 @@
-from .content import ContentContainer, ContentLocatable, Content, ContentLocation
-from .link import LinkSource, LinkTarget, LinkPreview, Link
-from .highlight import Highlight
+from .content import Content, ContentLocation  # TODO
+from .link import Link, LinkList  # TODO
 from .document import Document
+from .highlight import Highlight

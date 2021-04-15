@@ -19,6 +19,10 @@ class Entity(abc.ABC):
     def id(self):
         return self._id
 
+    @abc.abstractmethod
+    def _info(self) -> str:
+        pass
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
@@ -29,7 +33,3 @@ class Entity(abc.ABC):
 
     def __repr__(self):
         return f"{self.__class__}({self._info()})"
-
-    @abc.abstractmethod
-    def _info(self) -> str:
-        pass
