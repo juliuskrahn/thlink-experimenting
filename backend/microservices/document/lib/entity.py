@@ -20,6 +20,15 @@ class Entity(abc.ABC):
         return self._id
 
     @abc.abstractmethod
+    def delete(self):
+        pass
+
+    @abc.abstractmethod
+    @property
+    def deleted(self):
+        pass
+
+    @abc.abstractmethod
     def _info(self) -> str:
         pass
 

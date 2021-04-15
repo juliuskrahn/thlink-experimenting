@@ -32,11 +32,12 @@ class Link(domain.document.content.ContentLocatable, lib.Entity):
         link = cls(lib.Id(), source, location, target)
         source.register_link(link)
         target.register_backlink(link)
+        return link
 
     def delete(self):
         self._deleted = True
-        self.source.unregister_link(self.id)
-        self.target.unregister_backlink(self.id)
+        self.source.unregister_link(self)
+        self.target.unregister_backlink(self)
 
     @property
     def deleted(self):

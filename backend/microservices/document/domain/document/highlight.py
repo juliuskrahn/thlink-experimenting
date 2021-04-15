@@ -20,6 +20,8 @@ class Highlight(lib.Entity,
                  ):
 
         lib.Entity.__init__(self, id_)
+        self._deleted = False
+
         domain.document.content.ContentLocatable.__init__(self, location)
 
         self._document = document
@@ -32,6 +34,20 @@ class Highlight(lib.Entity,
         if links is None:
             links = []
         domain.document.link.Node.__init__(self, links, backlinks)
+
+    @classmethod
+    def create(cls, document: domain.document.Document, location: domain.document.ContentLocation):
+        highlight = cls(lib.Id(), document, location, [])
+        document.register_highlight(highlight)
+        return highlight
+
+    def delete(self):
+        self._deleted = True
+        self.document.unregister_highlight(self)
+
+    @property
+    def deleted(self):
+        return self._deleted
 
     @property
     def document(self):
@@ -48,18 +64,18 @@ class Highlight(lib.Entity,
     @content.setter
     def content(self, content: typing.Optional[domain.document.Content]):
         self._content = content
-        if not CanLinkPolicy.is_satisfied_by(self):
+        if not HighlightLinkSourcePolicy.is_satisfied_by(self):
             for link in self.links:
                 link.delete()
 
     @property
     def links(self):
-        if CanLinkPolicy.is_satisfied_by(self):
+        if HighlightLinkSourcePolicy.is_satisfied_by(self):
             return super().links
         return None
 
     def register_link(self, link: domain.document.link.Link):
-        assert CanLinkPolicy.is_satisfied_by(self)
+        assert HighlightLinkSourcePolicy.is_satisfied_by(self)
         super().register_link(link)
 
     def _info(self):
@@ -68,7 +84,7 @@ class Highlight(lib.Entity,
                f"location='{self.location}'"
 
 
-class CanLinkPolicy:
+class HighlightLinkSourcePolicy:
 
     @staticmethod
     def is_satisfied_by(highlight: Highlight):
