@@ -3,7 +3,7 @@ import typing
 import abc
 import lib
 from domain.document.content import ContentLocatable, ContentContainer, ContentLocation, Content
-from domain.document.link import BiDirectionallyLinkable, Link, LinkPreview, LinkTarget
+from domain.document.link import Node, Link, LinkPreview, LinkTarget
 
 
 class Highlightable:
@@ -22,7 +22,7 @@ class Highlightable:
         pass
 
 
-class Highlight(lib.Entity, ContentLocatable, BiDirectionallyLinkable, ContentContainer):
+class Highlight(lib.Entity, ContentLocatable, Node, ContentContainer):
 
     def __init__(self,
                  id_: lib.Id,
@@ -47,7 +47,7 @@ class Highlight(lib.Entity, ContentLocatable, BiDirectionallyLinkable, ContentCo
 
         if links is None:
             links = []
-        BiDirectionallyLinkable.__init__(self, links, backlinks)
+        Node.__init__(self, links, backlinks)
 
     @classmethod
     def create(cls, parent: Highlightable, location: ContentLocation):

@@ -1,11 +1,11 @@
 import typing
 import lib
 from domain.document.content import ContentContainer, Content, ContentLocation
-from domain.document.link import BiDirectionallyLinkable, Link, LinkPreview, LinkTarget
+from domain.document.link import Node, Link, LinkPreview, LinkTarget
 from domain.document.highlight import Highlightable, Highlight
 
 
-class Document(lib.Entity, BiDirectionallyLinkable, ContentContainer, Highlightable):
+class Document(lib.Entity, Node, ContentContainer, Highlightable):
 
     def __init__(self,
                  id_: lib.Id,
@@ -23,7 +23,7 @@ class Document(lib.Entity, BiDirectionallyLinkable, ContentContainer, Highlighta
         self._content = content
         self._link_preview = LinkPreview(self.title, None)
 
-        BiDirectionallyLinkable.__init__(self, links, backlinks)
+        Node.__init__(self, links, backlinks)
 
         self._highlights = lib.ChildEntities(highlights)
 
