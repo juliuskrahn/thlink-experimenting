@@ -1,1 +1,1 @@
-from .entity import Id, Entity
+from .entity import Id, Entity, ChildEntities

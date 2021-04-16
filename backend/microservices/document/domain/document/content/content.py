@@ -5,7 +5,7 @@ import dataclasses
 
 @dataclasses.dataclass(frozen=True)
 class Content:
-    data: typing.Any
+    body: typing.Any
     type: str
 
 

@@ -28,7 +28,7 @@ class Highlight(lib.Entity,
         self._content = content
         link_preview_text = None
         if self.content:
-            link_preview_text = self.content.data
+            link_preview_text = self.content.body
         self._link_preview = domain.document.link.LinkPreview(link_preview_text, self.document.link_preview)
 
         if links is None:
@@ -41,21 +41,9 @@ class Highlight(lib.Entity,
         document.register_highlight(highlight)
         return highlight
 
-    def delete(self):
-        self._deleted = True
-        self.document.unregister_highlight(self)
-
-    @property
-    def deleted(self):
-        return self._deleted
-
     @property
     def document(self):
         return self._document
-
-    @property
-    def link_preview(self):
-        return self._link_preview
 
     @property
     def content(self):
@@ -66,14 +54,23 @@ class Highlight(lib.Entity,
         self._content = content
         link_preview_text = None
         if content:
-            link_preview_text = content.data
+            link_preview_text = content.body
         self._link_preview.text = link_preview_text
         if not HighlightLinkSourcePolicy.is_satisfied_by(self):
             for link in self.links:
                 link.delete()
 
     @property
-    def links(self):
+    def link_preview(self):
+        return self._link_preview
+
+    def link(self, location: domain.document.content.ContentLocation, to: domain.document.link.LinkTarget):
+        assert HighlightLinkSourcePolicy.is_satisfied_by(self)
+        link = domain.document.link.Link.create(self, location, to)
+        return link
+
+    @property
+    def links(self) -> typing.Optional[typing.ValuesView[domain.document.link.Link]]:
         if HighlightLinkSourcePolicy.is_satisfied_by(self):
             return super().links
         return None
@@ -81,6 +78,14 @@ class Highlight(lib.Entity,
     def register_link(self, link: domain.document.link.Link):
         assert HighlightLinkSourcePolicy.is_satisfied_by(self)
         super().register_link(link)
+
+    def delete(self):
+        self._deleted = True
+        self.document.unregister_highlight(self.id)
+
+    @property
+    def deleted(self):
+        return self._deleted
 
     def _info(self):
         return f"id='{self.id}', " \

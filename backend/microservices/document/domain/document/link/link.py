@@ -12,8 +12,7 @@ class Link(domain.document.content.ContentLocatable, lib.Entity):
                  id_: lib.Id,
                  source: LinkSource,
                  location: domain.document.content.ContentLocation,
-                 target: LinkTarget,
-                 broken=False,
+                 target: typing.Optional[LinkTarget],
                  ):
         super().__init__(location)
         super(domain.document.content.ContentLocatable, self).__init__(id_)
@@ -21,8 +20,7 @@ class Link(domain.document.content.ContentLocatable, lib.Entity):
         self._location = location
         self._target = target
         self._source_preview = self.source.link_preview
-        self._target_preview = self.target.link_preview
-        self.broken = broken
+        self._target_preview = self.target.link_preview if self._target else None
         self._deleted = False
 
     @classmethod
@@ -38,8 +36,8 @@ class Link(domain.document.content.ContentLocatable, lib.Entity):
 
     def delete(self):
         self._deleted = True
-        self.source.unregister_link(self)
-        self.target.unregister_backlink(self)
+        self.source.unregister_link(self.id)
+        self.target.unregister_backlink(self.id)
 
     @property
     def deleted(self):
@@ -61,6 +59,10 @@ class Link(domain.document.content.ContentLocatable, lib.Entity):
     def target_preview(self):
         return self._target_preview
 
+    @property
+    def broken(self):
+        return self.target is None or self.target.deleted
+
     def _info(self):
         return f"id='{self.id}', " \
                f"source='{self.source}', " \
@@ -81,12 +83,17 @@ class LinkReference(abc.ABC):
     def link_preview(self) -> LinkPreview:
         pass
 
+    @abc.abstractmethod
+    @property
+    def deleted(self) -> bool:
+        pass
+
 
 class LinkSource(LinkReference):
 
     @abc.abstractmethod
     @property
-    def links(self) -> typing.List[Link]:  # view
+    def links(self) -> typing.ValuesView[Link]:
         pass
 
     @abc.abstractmethod
@@ -95,7 +102,7 @@ class LinkSource(LinkReference):
         pass
 
     @abc.abstractmethod
-    def unregister_link(self, link: Link):
+    def unregister_link(self, id_: lib.Id):
         # should be called by link
         pass
 
@@ -104,7 +111,7 @@ class LinkTarget(LinkReference):
 
     @abc.abstractmethod
     @property
-    def backlinks(self) -> typing.List[Link]:  # view
+    def backlinks(self) -> typing.ValuesView[Link]:
         pass
 
     @abc.abstractmethod
@@ -113,6 +120,6 @@ class LinkTarget(LinkReference):
         pass
 
     @abc.abstractmethod
-    def unregister_backlink(self, link: Link):
+    def unregister_backlink(self, id_: lib.Id):
         # should be called by link
         pass

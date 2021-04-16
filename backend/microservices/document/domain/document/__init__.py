@@ -1,4 +1,4 @@
-from .content import Content, ContentLocation  # TODO
-from .link import Link, LinkList  # TODO
+from .content import Content, ContentLocation
+from .link import Link
 from .document import Document
 from .highlight import Highlight
