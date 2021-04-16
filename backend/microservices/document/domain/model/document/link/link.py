@@ -2,8 +2,8 @@ from __future__ import annotations
 import typing
 import abc
 import dataclasses
-import lib
-from domain.document.content import ContentLocatable, ContentLocation
+from domain import lib
+from ..content import ContentLocatable, ContentLocation
 
 
 class Link(ContentLocatable, lib.Entity):

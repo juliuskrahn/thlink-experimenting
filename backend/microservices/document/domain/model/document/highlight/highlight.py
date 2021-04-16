@@ -1,9 +1,9 @@
 from __future__ import annotations
 import typing
 import abc
-import lib
-from domain.document.content import ContentLocatable, ContentContainer, ContentLocation, Content
-from domain.document.link import Node, Link, LinkPreview, LinkTarget
+from domain import lib
+from ..content import ContentLocatable, ContentContainer, ContentLocation, Content
+from ..link import Node, Link, LinkPreview, LinkTarget
 
 
 class Highlightable:

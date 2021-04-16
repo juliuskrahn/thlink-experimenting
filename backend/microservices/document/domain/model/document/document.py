@@ -1,8 +1,8 @@
 import typing
-import lib
-from domain.document.content import ContentContainer, Content, ContentLocation
-from domain.document.link import Node, Link, LinkPreview, LinkTarget
-from domain.document.highlight import Highlightable, Highlight
+from domain import lib
+from .content import ContentContainer, Content, ContentLocation
+from .link import Node, Link, LinkPreview, LinkTarget
+from .highlight import Highlightable, Highlight
 
 
 class Document(lib.Entity, Node, ContentContainer, Highlightable):
