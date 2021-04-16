@@ -4,14 +4,14 @@ import lib
 from . import LinkSource, LinkTarget, Link, LinkPreview
 
 
-class Node(LinkSource, LinkTarget):
+class BiDirectionallyLinkable(LinkSource, LinkTarget):
 
     def __init__(self, links: typing.List[Link], backlinks: typing.List[Link]):
         self._links = lib.ChildEntities(links)
         self._backlinks = lib.ChildEntities(backlinks)
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def link_preview(self) -> LinkPreview:
         pass
 

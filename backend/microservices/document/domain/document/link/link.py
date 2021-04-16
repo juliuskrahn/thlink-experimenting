@@ -3,19 +3,19 @@ import typing
 import abc
 import dataclasses
 import lib
-import domain.document.content
+from domain.document.content import ContentLocatable, ContentLocation
 
 
-class Link(domain.document.content.ContentLocatable, lib.Entity):
+class Link(ContentLocatable, lib.Entity):
 
     def __init__(self,
                  id_: lib.Id,
                  source: LinkSource,
-                 location: domain.document.content.ContentLocation,
+                 location: ContentLocation,
                  target: typing.Optional[LinkTarget],
                  ):
         super().__init__(location)
-        super(domain.document.content.ContentLocatable, self).__init__(id_)
+        super(ContentLocatable, self).__init__(id_)
         self._source = source
         self._location = location
         self._target = target
@@ -26,7 +26,7 @@ class Link(domain.document.content.ContentLocatable, lib.Entity):
     @classmethod
     def create(cls,
                source: LinkSource,
-               location: domain.document.content.ContentLocation,
+               location: ContentLocation,
                target: LinkTarget,
                ):
         link = cls(lib.Id(), source, location, target)
@@ -78,21 +78,21 @@ class LinkPreview:
 
 class LinkReference(abc.ABC):
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def link_preview(self) -> LinkPreview:
         pass
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def deleted(self) -> bool:
         pass
 
 
 class LinkSource(LinkReference):
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def links(self) -> typing.ValuesView[Link]:
         pass
 
@@ -109,8 +109,8 @@ class LinkSource(LinkReference):
 
 class LinkTarget(LinkReference):
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def backlinks(self) -> typing.ValuesView[Link]:
         pass
 

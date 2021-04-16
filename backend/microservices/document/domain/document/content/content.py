@@ -14,8 +14,8 @@ ContentLocation = typing.NewType("ContentLocation", str)
 
 class ContentContainer(abc.ABC):
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def content(self):
         pass
 

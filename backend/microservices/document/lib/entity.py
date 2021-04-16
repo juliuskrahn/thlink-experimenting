@@ -3,12 +3,19 @@ import abc
 import uuid
 
 
-class Id(str):
+class Id:
 
     def __init__(self, value: str = None):
         if value is None:
-            value = uuid.uuid4()
-        super().__init__(value)
+            value = uuid.uuid4().hex
+        self._value = value
+
+    @property
+    def value(self):
+        return self._value
+
+    def __repr__(self):
+        return self.value
 
 
 class Entity(abc.ABC):
@@ -24,8 +31,8 @@ class Entity(abc.ABC):
     def delete(self):
         pass
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def deleted(self):
         pass
 

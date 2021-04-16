@@ -1,21 +1,19 @@
 import typing
 import lib
-import domain.document.content
-import domain.document.link
+from domain.document.content import ContentContainer, Content, ContentLocation
+from domain.document.link import BiDirectionallyLinkable, Link, LinkPreview, LinkTarget
+from domain.document.highlight import Highlightable, Highlight
 
 
-class Document(lib.Entity,
-               domain.document.link.Node,
-               domain.document.content.ContentContainer,
-               ):
+class Document(lib.Entity, BiDirectionallyLinkable, ContentContainer, Highlightable):
 
     def __init__(self,
                  id_: lib.Id,
                  title: str,
-                 content: domain.document.Content,
-                 links: typing.List[domain.document.link.Link],
-                 backlinks: typing.List[domain.document.link.Link],
-                 highlights: typing.List[domain.document.Highlight],
+                 content: Content,
+                 links: typing.List[Link],
+                 backlinks: typing.List[Link],
+                 highlights: typing.List[Highlight],
                  ):
 
         lib.Entity.__init__(self, id_)
@@ -23,18 +21,18 @@ class Document(lib.Entity,
 
         self._title = title
         self._content = content
-        self._link_preview = domain.document.link.LinkPreview(self.title, None)
+        self._link_preview = LinkPreview(self.title, None)
 
-        domain.document.link.Node.__init__(self, links, backlinks)
+        BiDirectionallyLinkable.__init__(self, links, backlinks)
 
         self._highlights = lib.ChildEntities(highlights)
 
     @classmethod
     def create(cls,
                title: str,
-               content: domain.document.Content,
-               links: typing.List[domain.document.link.Link],
-               highlights: typing.List[domain.document.Highlight],
+               content: Content,
+               links: typing.List[Link],
+               highlights: typing.List[Highlight],
                ):
         return cls(lib.Id(), title, content, links, [], highlights)
 
@@ -52,9 +50,9 @@ class Document(lib.Entity,
         return self._content
 
     def update_content(self,
-                       content: domain.document.Content,
-                       links: typing.List[domain.document.Link],
-                       highlights: typing.List[domain.document.Highlight],
+                       content: Content,
+                       links: typing.List[Link],
+                       highlights: typing.List[Highlight],
                        ):
         self._content = content
         self._links = links
@@ -64,19 +62,19 @@ class Document(lib.Entity,
     def link_preview(self):
         return self._link_preview
 
-    def link(self, location: domain.document.content.ContentLocation, to: domain.document.link.LinkTarget):
-        link = domain.document.link.Link.create(self, location, to)
+    def link(self, location: ContentLocation, to: LinkTarget):
+        link = Link.create(self, location, to)
         return link
 
     @property
-    def highlights(self) -> typing.ValuesView[domain.document.Highlight]:
+    def highlights(self) -> typing.ValuesView[Highlight]:
         return self._highlights.view()
 
-    def highlight(self, location: domain.document.ContentLocation):
-        highlight = domain.document.Highlight.create(self, location)
+    def highlight(self, location: ContentLocation):
+        highlight = Highlight.create(self, location)
         return highlight
 
-    def get_highlight(self, id_: lib.Id) -> domain.document.Highlight:
+    def get_highlight(self, id_: lib.Id) -> Highlight:
         return self._highlights.get(id_)
 
     def delete_highlight(self, id_: lib.Id):
@@ -93,7 +91,7 @@ class Document(lib.Entity,
     def deleted(self):
         return self._deleted
 
-    def register_highlight(self, highlight: domain.document.Highlight):
+    def register_highlight(self, highlight: Highlight):
         self._highlights.register(highlight)
 
     def unregister_highlight(self, id_: lib.Id):
