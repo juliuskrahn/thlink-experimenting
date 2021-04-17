@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing
 import abc
 from domain import lib
-from ..content import ContentLocatable, ContentContainer, ContentLocation, Content
+from ..content import ContentLocatable, ContentLocation, Content
 from ..link import Node, Link, LinkPreview, LinkTarget
 
 
@@ -27,7 +27,7 @@ class Highlightable:
         pass
 
 
-class Highlight(lib.Entity, ContentLocatable, Node, ContentContainer):
+class Highlight(lib.Entity, ContentLocatable, Node):
 
     def __init__(self,
                  id_: lib.Id,
@@ -69,15 +69,19 @@ class Highlight(lib.Entity, ContentLocatable, Node, ContentContainer):
         return self._content
 
     @content.setter
-    def content(self, content: typing.Optional[Content]):
+    def content(self, content: Content):
+        assert content, "To delete the content (set content to None) call delete_content_and_links"
         self._content = content
-        link_preview_text = None
-        if content:
-            link_preview_text = content.body
-        self._link_preview.text = link_preview_text
-        if not HighlightLinkSourcePolicy.is_satisfied_by(self):
-            for link in self.links:
-                link.delete()
+        self._link_preview.text = content.body
+
+    def delete_content_and_links(self):
+        self.delete_links()
+        self._content = None
+        self._link_preview.text = None
+
+    def delete_links(self):
+        for link in [*self.links]:
+            link.delete()
 
     @property
     def link_preview(self):

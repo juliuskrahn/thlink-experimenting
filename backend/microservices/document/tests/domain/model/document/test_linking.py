@@ -5,38 +5,39 @@ from tests.domain.model.document.implementations import LinkSourceImplementation
     LinkNodeImplementation
 
 
-@pytest.fixture
-def link_id():
-    return lib.Id()
-
-
-@pytest.fixture(params=[LinkSourceImplementation, LinkNodeImplementation])
-def source(request):
+@pytest.fixture(params=[LinkSourceImplementation, LinkNodeImplementation, "Highlight with content"])
+def source(request, highlight_child_with_content):
+    if request.param == "Highlight with content":
+        return highlight_child_with_content
     return request.param([], [], LinkPreview("source", None))
 
 
-@pytest.fixture(params=[LinkTargetImplementation, LinkNodeImplementation])
-def target(request):
+@pytest.fixture(params=[LinkTargetImplementation, LinkNodeImplementation, "Highlight", "Highlight with content"])
+def target(request, highlight_child, highlight_child_with_content):
+    if request.param == "Highlight":
+        return highlight_child
+    if request.param == "Highlight with content":
+        return highlight_child_with_content
     return request.param([], [], LinkPreview("target", None))
 
 
 @pytest.fixture
-def link(link_id, source, content_location, target):
-    link = Link(link_id, source, content_location, target)
+def link(source, content_location, target):
+    link = Link(lib.Id(), source, content_location, target)
     source.register_link(link)
     target.register_backlink(link)
     return link
 
 
 @pytest.fixture
-def link_without_target(link_id, source, content_location):
-    link = Link(link_id, source, content_location, None)
+def link_without_target(source, content_location):
+    link = Link(lib.Id(), source, content_location, None)
     source.register_link(link)
     return link
 
 
-def test_link_init(link, link_id, source, content_location, target):
-    assert link.id == link_id
+def test_link_init(link, source, content_location, target):
+    assert isinstance(link.id, lib.Id)
     assert link.source == source
     assert link.source_preview == source.link_preview
     assert link.location == content_location

@@ -1,5 +1,4 @@
 import typing
-import abc
 import dataclasses
 
 
@@ -10,14 +9,6 @@ class Content:
 
 
 ContentLocation = typing.NewType("ContentLocation", str)
-
-
-class ContentContainer(abc.ABC):
-
-    @property
-    @abc.abstractmethod
-    def content(self):
-        pass
 
 
 class ContentLocatable:

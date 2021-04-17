@@ -1,11 +1,11 @@
 import typing
 from domain import lib
-from .content import ContentContainer, Content, ContentLocation
+from .content import Content, ContentLocation
 from .link import Node, Link, LinkPreview, LinkTarget
 from .highlight import Highlightable, Highlight
 
 
-class Document(lib.Entity, Node, ContentContainer, Highlightable):
+class Document(lib.Entity, Node, Highlightable):
 
     def __init__(self,
                  id_: lib.Id,

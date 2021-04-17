@@ -96,6 +96,10 @@ class HighlightableImplementation(Highlightable):
     def deleted(self):
         return self._deleted
 
+    @property
+    def highlights(self):
+        return self._highlights.values()
+
     def register_highlight(self, highlight: Highlight):
         self._highlights[highlight.id] = highlight
 
