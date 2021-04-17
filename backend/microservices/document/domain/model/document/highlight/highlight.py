@@ -13,6 +13,11 @@ class Highlightable:
     def link_preview(self):
         pass
 
+    @property
+    @abc.abstractmethod
+    def deleted(self):
+        pass
+
     @abc.abstractmethod
     def register_highlight(self, highlight: Highlight):
         pass
@@ -99,7 +104,7 @@ class Highlight(lib.Entity, ContentLocatable, Node, ContentContainer):
 
     @property
     def deleted(self):
-        return self._deleted
+        return self._deleted or self.parent.deleted
 
     def _info(self):
         return f"id='{self.id}', " \

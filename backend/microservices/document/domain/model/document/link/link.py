@@ -41,7 +41,7 @@ class Link(ContentLocatable, lib.Entity):
 
     @property
     def deleted(self):
-        return self._deleted
+        return self._deleted or self.source.deleted
 
     @property
     def source(self):
