@@ -1,1 +1,1 @@
-from .content import ContentLocatable, Content, ContentLocation
+from .content import Content, ContentLocatable, ContentLocation

@@ -52,12 +52,56 @@ class Entity(abc.ABC):
         return f"{self.__class__}({self._info()})"
 
 
-class ChildEntities:
+class RootEntity(Entity):
+    """RootEntity
+    Life cycle:
+    - create
+      /init (instantiate)
+    - mutate; behaviour creates child entities
+    - delete; delete child entities"""
+
+    @abc.abstractmethod
+    def create(self, *args, **kwargs):
+        pass
+
+
+class ChildEntity(Entity):
+    """ChildEntity
+    Life cycle:
+    - create
+        prepare (pass data)
+        primary parent -> behaviour (pass itself) -> completes child entity (-> registers on all parents)
+      /init (instantiate)
+    - mutate
+    - delete
+        primary parent -> behaviour -> delete (-> unregisters on all parents)"""
+
+    @classmethod
+    @abc.abstractmethod
+    def prepare(cls, *args, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def _complete(self, primary_parent: RootEntity):
+        # called by primary parent
+        pass
+
+    @property
+    @abc.abstractmethod
+    def completed(self):
+        pass
+
+    @abc.abstractmethod
+    def delete(self):
+        pass
+
+
+class ChildEntityManager:
 
     def __init__(self, list_: typing.List[Entity]):
         self._dict = {entity.id: entity for entity in list_}
 
-    def view(self) -> typing.ValuesView:
+    def get_all(self) -> typing.ValuesView:
         return self._dict.values()
 
     def get(self, id_: Id):

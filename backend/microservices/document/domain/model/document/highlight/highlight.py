@@ -3,112 +3,81 @@ import typing
 import abc
 from domain import lib
 from ..content import ContentLocatable, ContentLocation, Content
-from ..link import Node, Link, LinkPreview, LinkTarget
+from ..link import Node, Link, LinkPreview, LinkReference
 
 
-class Highlightable:
-
-    @property
-    @abc.abstractmethod
-    def link_preview(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def deleted(self):
-        pass
-
-    @abc.abstractmethod
-    def register_highlight(self, highlight: Highlight):
-        pass
-
-    @abc.abstractmethod
-    def unregister_highlight(self, id_: lib.Id):
-        pass
-
-
-class Highlight(lib.Entity, ContentLocatable, Node):
+class Highlight(Node, ContentLocatable, lib.ChildEntity):
 
     def __init__(self,
                  id_: lib.Id,
-                 parent: Highlightable,
                  location: ContentLocation,
+                 parent: typing.Optional[Highlightable],
+                 links: typing.Optional[typing.List[Link]],
                  backlinks: typing.List[Link],
-                 content: Content = None,
-                 links: typing.List[Link] = None,
+                 note: typing.Optional[Content],
                  ):
-
-        lib.Entity.__init__(self, id_)
+        lib.ChildEntity.__init__(self, id_)
+        ContentLocatable.__init__(self, location)
+        self._parent = parent
+        Node.__init__(self, links if links else [], backlinks)
+        self._note = note
+        self._link_preview = LinkPreview(note.body if note else None, parent.link_preview if parent else None)
         self._deleted = False
 
-        ContentLocatable.__init__(self, location)
-
-        self._parent = parent
-        self._content = content
-        link_preview_text = None
-        if self.content:
-            link_preview_text = self.content.body
-        self._link_preview = LinkPreview(link_preview_text, self.parent.link_preview)
-
-        if links is None:
-            links = []
-        Node.__init__(self, links, backlinks)
-
     @classmethod
-    def create(cls, parent: Highlightable, location: ContentLocation):
-        highlight = cls(lib.Id(), parent, location, [])
-        parent.register_highlight(highlight)
-        return highlight
+    def prepare(cls, location: ContentLocation):
+        return cls(lib.Id(), location=location, parent=None, links=None, backlinks=[], note=None)
+
+    def _complete(self, parent: Highlightable):
+        self._parent = parent
+        parent._register_highlight(self)
+        self._link_preview.parent = parent.link_preview
+
+    def delete(self):
+        self._deleted = True
+        self.parent._unregister_highlight(self.id)
+
+    @property
+    def completed(self):
+        return bool(self.parent)
+
+    @property
+    def deleted(self):
+        return self._deleted or self.parent.deleted
+
+    def make_note(self, note: Content, links: typing.List[Link] = None):
+        self._delete_links()
+        self._note = note
+        self._link_preview.text = note.body
+        if links:
+            self._complete_links(links)
+
+    def delete_note(self):
+        self._delete_links()
+        self._note = None
+        self._link_preview.text = None
+
+    @property
+    def note(self):
+        return self._note
 
     @property
     def parent(self):
         return self._parent
 
     @property
-    def content(self):
-        return self._content
+    def links(self) -> typing.Optional[typing.ValuesView[Link]]:
+        if HighlightIsLinkSourcePolicy.is_satisfied_by(self):
+            return super().links
+        return None
 
-    @content.setter
-    def content(self, content: Content):
-        assert content, "To delete the content (set content to None) call delete_content_and_links"
-        self._content = content
-        self._link_preview.text = content.body
-
-    def delete_content_and_links(self):
-        self.delete_links()
-        self._content = None
-        self._link_preview.text = None
-
-    def delete_links(self):
-        for link in [*self.links]:
-            link.delete()
+    def _register_link(self, link: Link):
+        assert HighlightIsLinkSourcePolicy.is_satisfied_by(self)
+        super()._register_link(link)
 
     @property
     def link_preview(self):
         return self._link_preview
-
-    def link(self, location: ContentLocation, to: LinkTarget):
-        assert HighlightLinkSourcePolicy.is_satisfied_by(self)
-        link = Link.create(self, location, to)
-        return link
-
-    @property
-    def links(self) -> typing.Optional[typing.ValuesView[Link]]:
-        if HighlightLinkSourcePolicy.is_satisfied_by(self):
-            return super().links
-        return None
-
-    def register_link(self, link: Link):
-        assert HighlightLinkSourcePolicy.is_satisfied_by(self)
-        super().register_link(link)
-
-    def delete(self):
-        self._deleted = True
-        self.parent.unregister_highlight(self.id)
-
-    @property
-    def deleted(self):
-        return self._deleted or self.parent.deleted
 
     def _info(self):
         return f"id='{self.id}', " \
@@ -116,8 +85,19 @@ class Highlight(lib.Entity, ContentLocatable, Node):
                f"location='{self.location}'"
 
 
-class HighlightLinkSourcePolicy:
+class HighlightIsLinkSourcePolicy:
 
     @staticmethod
     def is_satisfied_by(highlight: Highlight):
-        return highlight.content is not None
+        return highlight.note is not None
+
+
+class Highlightable(LinkReference):
+
+    @abc.abstractmethod
+    def _register_highlight(self, highlight: Highlight):
+        pass
+
+    @abc.abstractmethod
+    def _unregister_highlight(self, id_: lib.Id):
+        pass

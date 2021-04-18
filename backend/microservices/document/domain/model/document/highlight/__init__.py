@@ -1,1 +1,1 @@
-from .highlight import Highlightable, Highlight
+from .highlight import Highlight, Highlightable

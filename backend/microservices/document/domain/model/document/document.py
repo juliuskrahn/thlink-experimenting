@@ -1,40 +1,48 @@
 import typing
 from domain import lib
 from .content import Content, ContentLocation
-from .link import Node, Link, LinkPreview, LinkTarget
+from .link import Node, Link, LinkPreview
 from .highlight import Highlightable, Highlight
 
 
-class Document(lib.Entity, Node, Highlightable):
+class Document(Node, Highlightable, lib.RootEntity):
 
     def __init__(self,
                  id_: lib.Id,
                  title: str,
+                 tags: typing.List[str],
                  content: Content,
                  links: typing.List[Link],
                  backlinks: typing.List[Link],
                  highlights: typing.List[Highlight],
                  ):
-
-        lib.Entity.__init__(self, id_)
-        self._deleted = False
-
+        lib.RootEntity.__init__(self, id_)
         self._title = title
+        self._tags = tags
         self._content = content
         self._link_preview = LinkPreview(self.title, None)
-
         Node.__init__(self, links, backlinks)
-
-        self._highlights = lib.ChildEntities(highlights)
+        self._highlights = lib.ChildEntityManager(highlights)
+        self._deleted = False
 
     @classmethod
     def create(cls,
                title: str,
+               tags: typing.List[str],
                content: Content,
                links: typing.List[Link],
                highlights: typing.List[Highlight],
                ):
-        return cls(lib.Id(), title, content, links, [], highlights)
+        return cls(lib.Id(), title, tags, content, links=links, backlinks=[], highlights=highlights)
+
+    def delete(self):
+        self._deleted = True
+        self._delete_links()
+        self._delete_highlights()
+
+    @property
+    def deleted(self):
+        return self._deleted
 
     @property
     def title(self):
@@ -46,6 +54,16 @@ class Document(lib.Entity, Node, Highlightable):
         self._link_preview.text = title
 
     @property
+    def tags(self):
+        return [*self._tags]
+
+    def tag(self, tag: str):
+        self._tags.append(tag)
+
+    def untag(self, tag: str):
+        self._tags.remove(tag)
+
+    @property
     def content(self):
         return self._content
 
@@ -54,48 +72,41 @@ class Document(lib.Entity, Node, Highlightable):
                        links: typing.List[Link],
                        highlights: typing.List[Highlight],
                        ):
+        self._delete_links()
+        self._delete_highlights()
         self._content = content
-        self._links = links
-        self._highlights = highlights
+        self._complete_links(links)
+        self._complete_highlights(highlights)
 
-    @property
-    def link_preview(self):
-        return self._link_preview
+    def highlight(self, location: ContentLocation):
+        highlight = Highlight.prepare(location)
+        highlight._complete(self)
+        return highlight
 
-    def link(self, location: ContentLocation, to: LinkTarget):
-        link = Link.create(self, location, to)
-        return link
+    def _complete_highlights(self, highlights: typing.List[Highlight]):
+        for highlight in highlights:
+            highlight._complete(self)
+
+    def _delete_highlights(self):
+        for highlight in [*self.highlights]:
+            highlight.delete()
 
     @property
     def highlights(self) -> typing.ValuesView[Highlight]:
-        return self._highlights.view()
-
-    def highlight(self, location: ContentLocation):
-        highlight = Highlight.create(self, location)
-        return highlight
+        return self._highlights.get_all()
 
     def get_highlight(self, id_: lib.Id) -> Highlight:
         return self._highlights.get(id_)
 
-    def delete_highlight(self, id_: lib.Id):
-        self.get_highlight(id_).delete()
-
-    def delete(self):
-        self._deleted = True
-        for highlight in self.highlights:
-            highlight.delete()
-        for link in self.links:
-            link.delete()
-
-    @property
-    def deleted(self):
-        return self._deleted
-
-    def register_highlight(self, highlight: Highlight):
+    def _register_highlight(self, highlight: Highlight):
         self._highlights.register(highlight)
 
-    def unregister_highlight(self, id_: lib.Id):
+    def _unregister_highlight(self, id_: lib.Id):
         self._highlights.unregister(id_)
+
+    @property
+    def link_preview(self):
+        return self._link_preview
 
     def _info(self):
         return f"id='{self._id}', title='{self.title}'"
