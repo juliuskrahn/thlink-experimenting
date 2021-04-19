@@ -33,7 +33,10 @@ class Document(Node, Highlightable, lib.RootEntity):
                links: typing.List[Link],
                highlights: typing.List[Highlight],
                ):
-        return cls(lib.Id(), title, tags, content, links=links, backlinks=[], highlights=highlights)
+        document = cls(lib.Id(), title, tags, content, links=[], backlinks=[], highlights=[])
+        document._complete_links(links)
+        document._complete_highlights(highlights)
+        return document
 
     def delete(self):
         self._deleted = True

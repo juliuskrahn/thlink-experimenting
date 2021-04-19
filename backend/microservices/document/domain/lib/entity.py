@@ -14,6 +14,9 @@ class Id:
     def value(self):
         return self._value
 
+    def __hash__(self):
+        return hash(self.value)
+
     def __repr__(self):
         return self.value
 
@@ -39,11 +42,6 @@ class Entity(abc.ABC):
     @abc.abstractmethod
     def _info(self) -> str:
         pass
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return self.id == other.id
 
     def __hash__(self):
         return hash(self.id)
