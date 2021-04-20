@@ -1,16 +1,12 @@
-import pytest
-from domain.model.document.content import ContentLocatable
+from domain.model.document.content import Content, ContentLocation, ContentLocatable
 
 
-@pytest.fixture
-def content_locatable(content_location):
-    return ContentLocatable(content_location)
+def test_content():
+    content = Content("Lorem [[ipsum]]", "MD")
+    assert content.body == "Lorem [[ipsum]]"
+    assert content.type == "MD"
 
 
-def test_content(content, content_body, content_type):
-    assert content.body == content_body
-    assert content.type == content_type
-
-
-def test_content_locatable(content_locatable, content_location):
-    assert content_locatable.location == content_location
+def test_content_locatable():
+    content_locatable = ContentLocatable(ContentLocation("6:15"))
+    assert content_locatable.location == "6:15"
