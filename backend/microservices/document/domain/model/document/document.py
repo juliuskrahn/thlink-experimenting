@@ -3,12 +3,14 @@ from domain import lib
 from .content import Content, ContentLocation
 from .link import Node, Link, LinkPreview, LinkTarget
 from .highlight import Highlightable, Highlight
+from . import Workspace
 
 
 class Document(Node, Highlightable, lib.RootEntity):
 
     def __init__(self,
                  id_: lib.Id,
+                 workspace: Workspace,
                  title: str,
                  tags: typing.List[str],
                  content: Content,
@@ -17,6 +19,7 @@ class Document(Node, Highlightable, lib.RootEntity):
                  highlights: typing.List[Highlight],
                  ):
         lib.RootEntity.__init__(self, id_)
+        self._workspace = workspace
         self._title = title
         self._tags = tags
         self._content = content
@@ -27,13 +30,14 @@ class Document(Node, Highlightable, lib.RootEntity):
 
     @classmethod
     def create(cls,
+               workspace: Workspace,
                title: str,
                tags: typing.List[str],
                content: Content,
                links: typing.List[Link],
                highlights: typing.List[Highlight],
                ):
-        document = cls(lib.Id(), title, tags, content, links=[], backlinks=[], highlights=[])
+        document = cls(lib.Id(), workspace, title, tags, content, links=[], backlinks=[], highlights=[])
         document._complete_links(links)
         document._complete_highlights(highlights)
         return document
@@ -44,6 +48,10 @@ class Document(Node, Highlightable, lib.RootEntity):
     @property
     def deleted(self):
         return self._deleted
+
+    @property
+    def workspace(self):
+        return self._workspace
 
     @property
     def title(self):

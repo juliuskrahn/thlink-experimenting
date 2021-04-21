@@ -1,5 +1,5 @@
 import pytest
-from domain.model.document import Document, Content, Highlight, Link, ContentLocation
+from domain.model.document import Document, Content, Highlight, Link, ContentLocation, Workspace
 
 
 @pytest.fixture
@@ -13,18 +13,23 @@ def content_location():
 
 
 @pytest.fixture
-def other_document(content):
-    return Document.create("MyOtherDocument", tags=["Other"], content=content, links=[], highlights=[])
+def workspace():
+    return Workspace("MyWorkspace")
+
+
+@pytest.fixture
+def other_document(content, workspace):
+    return Document.create(workspace, "MyOtherDocument", tags=["Other"], content=content, links=[], highlights=[])
 
 
 @pytest.fixture(params=["document_with_tag", "document_with_link", "document_with_highlight"])
-def document(other_document, content, content_location, request):
+def document(other_document, content, content_location, request, workspace):
     other_document = other_document
     title = "MyDocument"
     tags = ["Important"] if request.param == "document_with_tag" else []
     links = [Link.prepare(content_location, other_document)] if request.param == "document_with_link" else []
     highlights = [Highlight.prepare(content_location)] if request.param == "document_with_highlight" else []
-    return Document.create(title, tags, content, links, highlights)
+    return Document.create(workspace, title, tags, content, links, highlights)
 
 
 @pytest.fixture

@@ -1,8 +1,14 @@
-from domain.model.document import Document, Content, Highlight, Link
+from domain.model.document import Document, Content, Highlight, Link, Workspace
 
 
-def test_can_create_document_with_title(content):
-    document = Document.create("MyDocument", tags=[], content=content, links=[], highlights=[])
+def test_can_create_document_with_workspace(content):
+    workspace = Workspace("MyWorkspace")
+    document = Document.create(workspace, "MyDocument", tags=[], content=content, links=[], highlights=[])
+    assert document.workspace is workspace
+
+
+def test_can_create_document_with_title(content, workspace):
+    document = Document.create(workspace, "MyDocument", tags=[], content=content, links=[], highlights=[])
     assert document.title == "MyDocument"
 
 
@@ -11,8 +17,8 @@ def test_can_change_document_title(document):
     assert document.title == "MyModifiedDocument"
 
 
-def test_can_create_document_with_tags(content):
-    document = Document.create("MyDocument", tags=["Important"], content=content, links=[], highlights=[])
+def test_can_create_document_with_tags(content, workspace):
+    document = Document.create(workspace, "MyDocument", tags=["Important"], content=content, links=[], highlights=[])
     assert document.tags == ["Important"]
 
 
@@ -27,24 +33,24 @@ def test_can_remove_tag_from_document(document):
     assert "New" not in document.tags
 
 
-def test_can_create_document_with_content():
+def test_can_create_document_with_content(workspace):
     content = Content("Lorem", "MD")
-    document = Document.create("MyDocument", tags=[], content=content,  links=[], highlights=[])
+    document = Document.create(workspace, "MyDocument", tags=[], content=content,  links=[], highlights=[])
     assert document.content == content
 
 
-def test_can_create_document_with_links(content, content_location, link_target):
+def test_can_create_document_with_links(content, content_location, link_target, workspace):
     link = Link.prepare(content_location, link_target)
-    document = Document.create("MyDocument", tags=[], content=content,
+    document = Document.create(workspace, "MyDocument", tags=[], content=content,
                                links=[link],
                                highlights=[])
     assert link in document.links
     assert document.get_link(link.id) is link
 
 
-def test_can_create_document_with_highlights(content, content_location):
+def test_can_create_document_with_highlights(content, content_location, workspace):
     highlight = Highlight.prepare(content_location)
-    document = Document.create("MyDocument", tags=[], content=content, links=[],
+    document = Document.create(workspace, "MyDocument", tags=[], content=content, links=[],
                                highlights=[highlight])
     assert highlight in document.highlights
     assert document.get_highlight(highlight.id) is highlight
