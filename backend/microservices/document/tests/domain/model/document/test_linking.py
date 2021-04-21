@@ -1,3 +1,11 @@
+def test_link_source_is_source_entity(link_from_link_source, link_source):
+    assert link_from_link_source.source is link_source
+
+
+def test_link_target_is_target_entity(link_from_link_source, link_target):
+    assert link_from_link_source.target is link_target
+
+
 def test_link_from_source_results_in_backlink_ref_on_target(link_from_link_source, link_target):
     # link is backlink
     assert link_from_link_source in link_target.backlinks

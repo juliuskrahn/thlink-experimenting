@@ -33,14 +33,6 @@ def test_can_create_document_with_content():
     assert document.content == content
 
 
-def test_can_create_document_with_highlights(content, content_location):
-    highlight = Highlight.prepare(content_location)
-    document = Document.create("MyDocument", tags=[], content=content, links=[],
-                               highlights=[highlight])
-    assert highlight in document.highlights
-    assert document.get_highlight(highlight.id) is highlight
-
-
 def test_can_create_document_with_links(content, content_location, link_target):
     link = Link.prepare(content_location, link_target)
     document = Document.create("MyDocument", tags=[], content=content,
@@ -48,6 +40,14 @@ def test_can_create_document_with_links(content, content_location, link_target):
                                highlights=[])
     assert link in document.links
     assert document.get_link(link.id) is link
+
+
+def test_can_create_document_with_highlights(content, content_location):
+    highlight = Highlight.prepare(content_location)
+    document = Document.create("MyDocument", tags=[], content=content, links=[],
+                               highlights=[highlight])
+    assert highlight in document.highlights
+    assert document.get_highlight(highlight.id) is highlight
 
 
 def test_can_update_document_content_and_replace_links_and_highlights(document, content_location, link_target):
@@ -58,6 +58,8 @@ def test_can_update_document_content_and_replace_links_and_highlights(document, 
     assert document.content == content
     assert link in document.links
     assert highlight in document.highlights
+    assert document.get_link(link.id) is link
+    assert document.get_highlight(highlight.id) is highlight
 
 
 def test_can_link_document(document, content_location, link_target):
@@ -76,6 +78,7 @@ def test_can_delete_document_link(document, content_location, link_target):
 def test_can_highlight_document(document, content_location):
     highlight = document.highlight(content_location)
     assert highlight in document.highlights
+    assert document.get_highlight(highlight.id) is highlight
 
 
 def test_can_delete_document_highlight(document, content_location):
