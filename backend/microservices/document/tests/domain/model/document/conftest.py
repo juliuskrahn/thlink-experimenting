@@ -25,3 +25,38 @@ def document(other_document, content, content_location, request):
     links = [Link.prepare(content_location, other_document)] if request.param == "document_with_link" else []
     highlights = [Highlight.prepare(content_location)] if request.param == "document_with_highlight" else []
     return Document.create(title, tags, content, links, highlights)
+
+
+@pytest.fixture
+def highlight(document, content_location):
+    return document.highlight(content_location)
+
+
+@pytest.fixture
+def highlight_with_note(document, content_location, content):
+    highlight = document.highlight(content_location)
+    highlight.make_note(content)
+    return highlight
+
+
+@pytest.fixture(params=["document_link_target", "highlight_link_target"])
+def link_target(request, other_document, highlight):
+    if request.param == "highlight_link_target":
+        return highlight
+    return other_document
+
+
+@pytest.fixture(params=["document_link_source", "highlight_link_source"])
+def link_source(request, document, highlight):
+    if request.param == "highlight_link_source":
+        return highlight
+    return document
+
+
+@pytest.fixture
+def link_from_link_source(link_source, content_location, link_target, content):
+    if isinstance(link_source, Highlight):
+        link = Link.prepare(content_location, link_target)
+        link_source.make_note(content, [link])
+        return link
+    return link_source.link(content_location, link_target)
