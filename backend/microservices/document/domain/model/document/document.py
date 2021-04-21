@@ -1,7 +1,7 @@
 import typing
 from domain import lib
 from .content import Content, ContentLocation
-from .link import Node, Link, LinkPreview
+from .link import Node, Link, LinkPreview, LinkTarget
 from .highlight import Highlightable, Highlight
 
 
@@ -40,8 +40,6 @@ class Document(Node, Highlightable, lib.RootEntity):
 
     def delete(self):
         self._deleted = True
-        self._delete_links()
-        self._delete_highlights()
 
     @property
     def deleted(self):
@@ -80,6 +78,11 @@ class Document(Node, Highlightable, lib.RootEntity):
         self._content = content
         self._complete_links(links)
         self._complete_highlights(highlights)
+
+    def link(self, location: ContentLocation, to: LinkTarget):
+        link = Link.prepare(location, to)
+        link._complete(self)
+        return link
 
     def highlight(self, location: ContentLocation):
         highlight = Highlight.prepare(location)

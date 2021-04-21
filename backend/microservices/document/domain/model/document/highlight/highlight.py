@@ -46,8 +46,7 @@ class Highlight(Node, ContentLocatable, lib.ChildEntity):
         return self._deleted or self.parent.deleted
 
     def make_note(self, note: Content, links: typing.List[Link] = None):
-        if self.links:
-            self._delete_links()
+        self._delete_links()
         self._note = note
         self._link_preview.text = note.body
         if links:

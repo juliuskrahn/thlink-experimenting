@@ -133,13 +133,8 @@ class Node(LinkSource, LinkTarget):
         self._links = lib.ChildEntityManager(links if links else [])
         self._backlinks = lib.ChildEntityManager(backlinks if backlinks else [])
 
-    def link(self, location: ContentLocation, to: LinkTarget):
-        link = Link.prepare(location, to)
-        link._complete(self)
-        return link
-
     @property
-    def links(self) -> typing.ValuesView[Link]:
+    def links(self) -> typing.Optional[typing.ValuesView[Link]]:
         return self._links.get_all()
 
     def get_link(self, id_: lib.Id) -> Link:
@@ -156,8 +151,9 @@ class Node(LinkSource, LinkTarget):
             link._complete(self)
 
     def _delete_links(self):
-        for link in [*self.links]:
-            link.delete()
+        if self.links:
+            for link in [*self.links]:
+                link.delete()
 
     @property
     def backlinks(self) -> typing.ValuesView[Link]:
