@@ -12,19 +12,22 @@ class Link(ContentLocatable, lib.ChildEntity):
                  id_: lib.Id,
                  location: ContentLocation,
                  source: typing.Optional[LinkSource],
-                 target: typing.Optional[LinkTarget]
+                 source_link_preview: typing.Optional[LinkPreview],
+                 target: typing.Optional[LinkTarget],
+                 target_link_preview: typing.Optional[LinkPreview],
                  ):
         lib.ChildEntity.__init__(self, id_)
         ContentLocatable.__init__(self, location)
         self._source = source
         self._target = target
-        self._source_preview = source.link_preview if source else None
-        self._target_preview = target.link_preview if target else None
+        self._source_preview = source_link_preview
+        self._target_preview = target_link_preview
         self._deleted = False
 
     @classmethod
     def prepare(cls, location: ContentLocation, target: LinkTarget):
-        return cls(lib.Id(), location=location, source=None, target=target)
+        return cls(lib.Id(), location=location, target=target, target_link_preview=target.link_preview,
+                   source=None, source_link_preview=None)
 
     def _complete(self, source: LinkSource):
         self._source = source
@@ -33,9 +36,10 @@ class Link(ContentLocatable, lib.ChildEntity):
         self.target._register_backlink(self)
 
     def delete(self):
-        self._deleted = True
-        self.source._unregister_link(self.id)
-        self.target._unregister_backlink(self.id)
+        if not self.deleted:
+            self._deleted = True
+            self.source._unregister_link(self.id)
+            self.target._unregister_backlink(self.id)
 
     @property
     def completed(self):
@@ -78,7 +82,7 @@ class LinkPreview:
     parent: typing.Optional[LinkPreview]
 
 
-class LinkReference:
+class LinkReference(abc.ABC):
 
     @property
     @abc.abstractmethod

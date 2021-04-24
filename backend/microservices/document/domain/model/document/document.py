@@ -12,6 +12,7 @@ class Document(Node, Highlightable, lib.RootEntity):
                  id_: lib.Id,
                  workspace: Workspace,
                  title: str,
+                 link_preview: LinkPreview,
                  tags: typing.List[str],
                  content: Content,
                  links: typing.List[Link],
@@ -23,7 +24,7 @@ class Document(Node, Highlightable, lib.RootEntity):
         self._title = title
         self._tags = tags
         self._content = content
-        self._link_preview = LinkPreview(self.title, None)
+        self._link_preview = link_preview
         Node.__init__(self, links, backlinks)
         self._highlights = lib.ChildEntityManager(highlights)
         self._deleted = False
@@ -37,7 +38,8 @@ class Document(Node, Highlightable, lib.RootEntity):
                links: typing.List[Link],
                highlights: typing.List[Highlight],
                ):
-        document = cls(lib.Id(), workspace, title, tags, content, links=[], backlinks=[], highlights=[])
+        document = cls(lib.Id(), workspace, title, LinkPreview(title, None), tags, content,
+                       links=[], backlinks=[], highlights=[])
         document._complete_links(links)
         document._complete_highlights(highlights)
         return document
