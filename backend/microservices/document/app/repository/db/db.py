@@ -41,10 +41,18 @@ class DB:
         except botocore.exceptions.ClientError as e:
             raise
 
-    def put(self, item):
+    def put(self, item, expected: typing.Dict = None):
         try:
-            self._table.put_item(Item=item)
+            expression_values = {}
+            statements = []
+            for name, value in expected.items():
+                statements.append(f"{name}=:{name}")
+                expression_values[f":{name}"] = value
+            condition_expression = " AND ".join(statements)
+            self._table.put_item(Item=item, ConditionExpression=condition_expression)
         except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+                raise ExpectationNotMet
             raise
 
     def update(self, key: ItemKey, item: typing.Dict, old_item: typing.Dict):
@@ -91,3 +99,7 @@ class DB:
             self._table.delete_item(Key=key.as_dynamodb_key())
         except botocore.exceptions.ClientError as e:
             raise
+
+
+class ExpectationNotMet(ValueError):
+    pass

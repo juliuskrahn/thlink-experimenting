@@ -6,7 +6,7 @@ from domain import lib
 from domain.model.document.link import LinkPreview
 from domain.model.document import Document, Workspace, Link, Highlight, Content, ContentLocation
 from domain.model.document import DocumentRepository as AbstractDocumentRepository
-from .db import DB, ItemKey
+from .db import DB, ItemKey, ExpectationNotMet
 from .object_storage import ObjectStorage
 
 
@@ -36,6 +36,7 @@ class DocumentRepository(AbstractDocumentRepository):
 
     def add(self, document: Document):
         self._documents[(document.id, document.workspace)] = document
+        DocumentRepositoryDocument._repository_init(document, version=-1, content_id=lib.Id())
 
     def get_all_in_workspace(self, workspace: Workspace) -> typing.List[Document]:
         for document in self._documents_loaded:
@@ -70,13 +71,13 @@ class DocumentRepository(AbstractDocumentRepository):
                 old_item=self._document_serializer.serialize_document(document_loaded),
             )
         else:
+            document.version += 1
             try:
-                content_id = document.content_id
-            except AttributeError:
-                content_id = lib.Id()
-                document.content_id = content_id
-            self._db.put(item=self._document_serializer.serialize_document(document))
-            self._object_storage.put(content_id, document.content.body)
+                self._db.put(self._document_serializer.serialize_document(document),
+                             expected={"version": document.version})
+            except ExpectationNotMet:
+                raise DocumentModifiedByOtherUser
+            self._object_storage.put(document.content_id, document.content.body)
 
     def _document_is_dirty(self, document: Document):
         return self._document_serializer.serialize_document(
@@ -150,7 +151,7 @@ class DocumentFactory:
             backlinks=backlinks,
             highlights=highlights,
         )
-        document._repository_init(content_id)
+        document._repository_init(data["version"], content_id)
         return document
 
     def _get_link(self,
@@ -201,9 +202,9 @@ class DocumentFactory:
             target_link_preview=unknown_link_preview if unknown == "target" else known_link_preview,
         )
         link._repository_init(
-            source_id=known_document_id if unknown == "target" else unknown_document_id,
+            source_document_id=known_document_id if unknown == "target" else unknown_document_id,
             source_workspace=known_workspace if unknown == "target" else unknown_workspace,
-            target_id=unknown_document_id if unknown == "target" else known_document_id,
+            target_document_id=unknown_document_id if unknown == "target" else known_document_id,
             target_workspace=unknown_workspace if unknown == "target" else known_workspace,
             source_highlight_id=known_highlight_id if unknown == "target" else unknown_highlight_id,
             target_highlight_id=unknown_highlight_id if unknown == "target" else known_highlight_id,
@@ -254,7 +255,7 @@ class DocumentFactory:
 
 class DocumentSerializer:
 
-    def serialize_document(self, document: Document) -> typing.Dict:
+    def serialize_document(self, document: DocumentRepositoryDocument) -> typing.Dict:
         links = self._serialize_entities(document.links, self._serialize_link)
         backlinks = self._serialize_entities(document.backlinks, self._serialize_backlink)
         highlights = self._serialize_entities(document.highlights, self._serialize_highlight)
@@ -266,6 +267,8 @@ class DocumentSerializer:
             "links": links,
             "backlinks": backlinks,
             "highlights": highlights,
+            "content_id": document.content_id,
+            "version": document.version,
         }
 
     @staticmethod
@@ -281,7 +284,7 @@ class DocumentSerializer:
         data = {
             "location": link.location,
             "target": {
-                "document_id": link.target_id,
+                "document_id": link.target_document_id,
                 "workspace": link.target_workspace,
                 "link_preview": link.target_preview,
             },
@@ -295,9 +298,9 @@ class DocumentSerializer:
         data = {
             "location": link.location,
             "source": {
-                "document_id": link.target_id,
-                "workspace": link.target_workspace,
-                "link_preview": link.target_preview,
+                "document_id": link.source_document_id,
+                "workspace": link.source_workspace,
+                "link_preview": link.source_preview,
             },
         }
         if link.source_highlight_id:
@@ -317,46 +320,23 @@ class DocumentSerializer:
 
 class DocumentRepositoryDocument(Document):
 
-    def _repository_init(self, content_id: lib.Id):
-        self._content_id = content_id
-
-    @property
-    def content_id(self):
-        return self._content_id
+    def _repository_init(self, version: int, content_id: lib.Id):
+        self.content_id = content_id
+        self.version = version
 
 
 class DocumentRepositoryLink(Link):
     # keep known data directly on link to avoid having to load a ref
 
-    def _repository_init(self, source_id, source_workspace, target_id, target_workspace,
+    def _repository_init(self, source_document_id, source_workspace, target_document_id, target_workspace,
                          source_highlight_id=None, target_highlight_id=None):
-        self._source_id = source_id
-        self._source_workspace = source_workspace
-        self._source_highlight_id = source_highlight_id
-        self._target_id = target_id
-        self._target_workspace = target_workspace
-        self._target_highlight_id = target_highlight_id
+        self.source_document_id = source_document_id
+        self.source_workspace = source_workspace
+        self.source_highlight_id = source_highlight_id
+        self.target_document_id = target_document_id
+        self.target_workspace = target_workspace
+        self.target_highlight_id = target_highlight_id
 
-    @property
-    def source_id(self):
-        return self._source_id
 
-    @property
-    def source_workspace(self):
-        return self._source_workspace
-
-    @property
-    def source_highlight_id(self):
-        return self._source_highlight_id
-
-    @property
-    def target_id(self):
-        return self._target_id
-
-    @property
-    def target_workspace(self):
-        return self._target_workspace
-
-    @property
-    def target_highlight_id(self):
-        return self._target_highlight_id
+class DocumentModifiedByOtherUser(ValueError):
+    pass

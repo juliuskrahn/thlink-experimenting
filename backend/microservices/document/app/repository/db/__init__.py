@@ -1,1 +1,1 @@
-from .db import DB, ItemKey
+from .db import DB, ItemKey, ExpectationNotMet
