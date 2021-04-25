@@ -21,6 +21,12 @@ class DocumentRepository(AbstractDocumentRepository):
         self._document_factory = DocumentFactory(self)
         self._document_serializer = DocumentSerializer()
 
+    @classmethod
+    def use(cls) -> typing.ContextManager[DocumentRepository]:
+        repository = cls()
+        yield repository
+        repository._save()
+
     def get(self, id_: lib.Id, workspace: Workspace) -> Document:
         document = self._documents.get((id_, workspace))
         if document:
