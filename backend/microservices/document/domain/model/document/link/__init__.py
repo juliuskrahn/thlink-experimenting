@@ -1,1 +1,3 @@
-from .link import Link, Node, LinkPreview, LinkSource, LinkTarget, LinkReference
+from .link import Link, LinkPreview, LinkSource, LinkTarget, LinkReference
+from .node import Node
+from .policy import TargetIsInSameWorkspaceAsSourcePolicy
