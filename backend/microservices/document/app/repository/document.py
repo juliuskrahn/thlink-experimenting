@@ -13,7 +13,7 @@ from .object_storage import ObjectStorage
 class DocumentRepository(AbstractDocumentRepository):
 
     def __init__(self):
-        documents_type = typing.Dict[[lib.Id, Workspace]: Document]
+        documents_type = typing.Dict[[lib.Id, Workspace]: DocumentRepositoryDocument]
         self._documents: documents_type = {}
         self._documents_loaded: documents_type = {}
         self._db = DB()
@@ -27,7 +27,7 @@ class DocumentRepository(AbstractDocumentRepository):
         yield repository
         repository._save()
 
-    def get(self, id_: lib.Id, workspace: Workspace) -> Document:
+    def get(self, id_: lib.Id, workspace: Workspace) -> DocumentRepositoryDocument:
         document = self._documents.get((id_, workspace))
         if document:
             return document
@@ -42,9 +42,9 @@ class DocumentRepository(AbstractDocumentRepository):
 
     def add(self, document: Document):
         self._documents[(document.id, document.workspace)] = document
-        DocumentRepositoryDocument._repository_init(document, version=-1, content_id=lib.Id())
+        DocumentRepositoryDocument._repository_init(document, version=0, content_id=lib.Id())
 
-    def get_all_in_workspace(self, workspace: Workspace) -> typing.List[Document]:
+    def get_all_in_workspace(self, workspace: Workspace) -> typing.List[DocumentRepositoryDocument]:
         for document in self._documents_loaded:
             if document.workspace == workspace:
                 assert ValueError("Workspace is already partially loaded")
@@ -53,7 +53,7 @@ class DocumentRepository(AbstractDocumentRepository):
         for raw_document in raw_documents:
             document = self._document_factory.build_document(
                 raw_document,
-                content_body_getter_factory=lambda content_id: self._object_storage.get(content_id),
+                content_body_getter_factory=lambda content_id: lambda: self._object_storage.get(content_id),
             )
             documents.append(document)
             self._documents[(document.id, document.workspace)] = document
@@ -69,7 +69,7 @@ class DocumentRepository(AbstractDocumentRepository):
         if document.deleted:
             if document_loaded:
                 self._db.delete(ItemKey("workspace", document.workspace, secondary=ItemKey("id", document.id)))
-                self._object_storage.delete(document.content_id)
+                self._object_storage.delete(document.content_id.value)
         elif document_loaded and document_loaded.content == document.content:
             self._db.update(
                 key=ItemKey("workspace", document.workspace, secondary=ItemKey("id", document.id)),
@@ -79,33 +79,37 @@ class DocumentRepository(AbstractDocumentRepository):
         else:
             document.version += 1
             try:
-                self._db.put(self._document_serializer.serialize_document(document),
-                             expected={"version": document.version})
+                self._db.put(
+                    key=ItemKey("workspace", document.workspace, secondary=ItemKey("id", document.id)),
+                    item=self._document_serializer.serialize_document(document),
+                    expect_if_item_exists={"version": document.version}
+                )
             except ExpectationNotMet:
                 raise DocumentModifiedByOtherUser
-            self._object_storage.put(document.content_id, document.content.body)
+            self._object_storage.put(document.content_id.value, document.content.body)
 
-    def _document_is_dirty(self, document: Document):
+    def _document_is_dirty(self, document: DocumentRepositoryDocument):
         return self._document_serializer.serialize_document(
                     self._documents_loaded.get((document.id, document.workspace))
                 ) \
                != self._document_serializer.serialize_document(document)
 
-    def _collect_dirty_documents(self) -> typing.Iterable[Document]:
+    def _collect_dirty_documents(self) -> typing.Iterable[DocumentRepositoryDocument]:
         for document in self._documents.values():
             if self._document_is_dirty(document):
                 for indirect in self._collect_indirect_dirty_documents(document):
                     yield indirect
                 yield document
 
-    def _collect_indirect_dirty_documents(self, document: Document) -> typing.Iterable[Document]:
+    def _collect_indirect_dirty_documents(self, document: DocumentRepositoryDocument)\
+            -> typing.Iterable[DocumentRepositoryDocument]:
         document_loaded = self._documents_loaded.get((document.id, document.workspace))
         if not document_loaded:
             raise StopIteration
 
         document_link_targets_are_dirty = document_loaded.link_preview != document.link_preview
 
-        def highlight_link_targets_are_dirty(highlight):
+        def highlight_link_targets_are_dirty(highlight: Highlight):
             loaded_highlight = document_loaded.get_highlight(highlight.id)
             return loaded_highlight and loaded_highlight.links \
                 and loaded_highlight.link_preview != highlight.link_preview
@@ -163,10 +167,10 @@ class DocumentFactory:
     def _get_link(self,
                   link_id: lib.Id,
                   link_data,
-                  known_document_id,
-                  known_workspace,
-                  known_link_preview,
-                  known_highlight_id=None,
+                  known_document_id: lib.Id,
+                  known_workspace: Workspace,
+                  known_link_preview: LinkPreview,
+                  known_highlight_id: lib.Id = None,
                   ):
         unknown = "target" if "target" in link_data else "source"
         link = self._fragment_links.get(link_id)
@@ -218,7 +222,7 @@ class DocumentFactory:
         self._fragment_links[link_id] = link
         return link
 
-    def _get_highlight(self, document_id, workspace, document_link_preview,
+    def _get_highlight(self, document_id: lib.Id, workspace: Workspace, document_link_preview: LinkPreview,
                        highlight_id: lib.Id, highlight_data) -> Highlight:
         link_preview = self._get_link_preview(document_id, workspace, highlight_id,
                                               factory_fn=lambda: LinkPreview(highlight_data["link_preview"],
@@ -287,6 +291,7 @@ class DocumentSerializer:
 
     @staticmethod
     def _serialize_link(link: DocumentRepositoryLink) -> typing.Tuple[str, typing.Dict]:
+        # TODO new links not inited by repo?
         data = {
             "location": link.location,
             "target": {
@@ -313,7 +318,7 @@ class DocumentSerializer:
             data["source"]["highlight_id"] = link.source_highlight_id
         return link.id, data
 
-    def _serialize_highlight(self, highlight) -> typing.Tuple[str, typing.Dict]:
+    def _serialize_highlight(self, highlight: Highlight) -> typing.Tuple[str, typing.Dict]:
         links = self._serialize_entities(highlight.links, self._serialize_link) if highlight.links else {}
         backlinks = self._serialize_entities(highlight.backlinks, self._serialize_backlink)
         return highlight.id, {
@@ -326,7 +331,7 @@ class DocumentSerializer:
 
 class DocumentRepositoryDocument(Document):
 
-    def _repository_init(self, version: int, content_id: lib.Id):
+    def _repository_init(self: Document, version: int, content_id: lib.Id):
         self.content_id = content_id
         self.version = version
 
@@ -334,7 +339,7 @@ class DocumentRepositoryDocument(Document):
 class DocumentRepositoryLink(Link):
     # keep known data directly on link to avoid having to load a ref
 
-    def _repository_init(self, source_document_id, source_workspace, target_document_id, target_workspace,
+    def _repository_init(self: Link, source_document_id, source_workspace, target_document_id, target_workspace,
                          source_highlight_id=None, target_highlight_id=None):
         self.source_document_id = source_document_id
         self.source_workspace = source_workspace

@@ -1,3 +1,5 @@
-import typing
+from domain.lib import Id
 
-Workspace = typing.NewType("Workspace", str)
+
+class Workspace(Id):
+    pass

@@ -41,14 +41,19 @@ class DB:
         except botocore.exceptions.ClientError as e:
             raise
 
-    def put(self, item, expected: typing.Dict = None):
+    def put(self, key: ItemKey, item, expect_if_item_exists: typing.Dict = None):
+        assert key.name in item
+        assert not key.secondary or key.secondary in item
+        expression_values = {}
+        statements = []
+        for name, value in expect_if_item_exists.items():
+            statements.append(f"{name}=:{name}")
+            expression_values[f":{name}"] = value
+        condition_expression = " AND ".join(statements)
+        if expect_if_item_exists:
+            condition_expression = f"({condition_expression}) OR {key.name}<>:{key.name}"
+            expression_values[key.name] = key.value
         try:
-            expression_values = {}
-            statements = []
-            for name, value in expected.items():
-                statements.append(f"{name}=:{name}")
-                expression_values[f":{name}"] = value
-            condition_expression = " AND ".join(statements)
             self._table.put_item(Item=item, ConditionExpression=condition_expression)
         except botocore.exceptions.ClientError as e:
             if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
@@ -56,6 +61,9 @@ class DB:
             raise
 
     def update(self, key: ItemKey, item: typing.Dict, old_item: typing.Dict):
+        assert key.name in item
+        assert not key.secondary or key.secondary in item
+
         def build_expression():  # apply diff
             statements = []
             values = {}
