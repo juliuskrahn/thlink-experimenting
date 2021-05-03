@@ -75,7 +75,8 @@ class Highlight(Node, ContentLocatable, lib.ChildEntity):
         return None
 
     def _register_link(self, link: Link):
-        assert HighlightIsLinkSourcePolicy.is_satisfied_by(self)
+        if not HighlightIsLinkSourcePolicy.is_satisfied_by(self):
+            raise lib.DomainError(f"{self} can't be a link source.")
         super()._register_link(link)
 
     @property

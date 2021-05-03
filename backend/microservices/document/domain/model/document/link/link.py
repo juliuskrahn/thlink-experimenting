@@ -31,7 +31,8 @@ class Link(ContentLocatable, lib.ChildEntity):
                    source=None, source_link_preview=None)
 
     def _complete(self, source: LinkSource):
-        assert TargetIsInSameWorkspaceAsSourcePolicy.is_satisfied_by(source, self.target)
+        if not TargetIsInSameWorkspaceAsSourcePolicy.is_satisfied_by(source, self.target):
+            raise lib.DomainError("Link target and source must be in the same workspace.")
         self._source = source
         source._register_link(self)
         self._source_preview = source.link_preview
