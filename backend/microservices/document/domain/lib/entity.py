@@ -51,12 +51,13 @@ class Entity(abc.ABC):
 
 
 class RootEntity(Entity):
-    """RootEntity
+    """
     Life cycle:
     - create
       /init (instantiate)
     - mutate; behaviour creates child entities
-    - delete; delete child entities"""
+    - delete; delete child entities
+    """
 
     @abc.abstractmethod
     def create(self, *args, **kwargs):
@@ -64,7 +65,7 @@ class RootEntity(Entity):
 
 
 class ChildEntity(Entity):
-    """ChildEntity
+    """
     Life cycle:
     - create
         prepare (pass data)
@@ -72,7 +73,8 @@ class ChildEntity(Entity):
       /init (instantiate)
     - mutate
     - delete
-        primary parent -> behaviour -> delete (-> unregisters on all parents)"""
+        (-> unregisters on all parents)
+    """
 
     @classmethod
     @abc.abstractmethod
