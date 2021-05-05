@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Generator, ContextManager, Dict, Callable, Union
+from typing import List, Generator, ContextManager, Dict, Callable, Union, Tuple
 from copy import deepcopy
 from domain import lib
 from domain.model.document.link import LinkPreview
@@ -15,8 +15,8 @@ from app.implementation import THLINK_DOCUMENT
 class DocumentRepository(AbstractDocumentRepository):
 
     def __init__(self):
-        self._documents: Dict[[lib.Id, Workspace]: DocumentRepositoryDocument] = {}
-        self._documents_loaded: Dict[[lib.Id, Workspace]: DocumentRepositoryDocument] = {}
+        self._documents: Dict[Tuple[lib.Id, Workspace], DocumentRepositoryDocument] = {}
+        self._documents_loaded: Dict[Tuple[lib.Id, Workspace], DocumentRepositoryDocument] = {}
         self._db = db.DB()
         self._object_storage = object_storage.ObjectStorage()
         self._document_factory = DocumentFactory(self)
@@ -143,8 +143,8 @@ class DocumentFactory:
 
         # Links and LinkPreviews are referenced by multiple entities that are instantiated independently,
         # this means we have to reuse already instantiated Links/ LinkPreviews.
-        self._links: Dict[[lib.Id]: Link] = {}  # key -> link id
-        self._link_previews: Dict[[lib.Id]: LinkPreview] = {}  # key -> document id/ document highlight id
+        self._links: Dict[lib.Id, Link] = {}  # key -> link id
+        self._link_previews: Dict[lib.Id, LinkPreview] = {}  # key -> document id/ document highlight id
 
         # Store the id of the document that is currently being build so that the document repository can prevent
         # bootstrapping loops

@@ -51,8 +51,8 @@ class SerializedHighlight(BaseModel):
     location: str
     note_body: str = None
     link_preview_text: str
-    links: Dict[[str]: SerializedLink] = None
-    backlinks: Dict[[str]: SerializedBacklink]
+    links: Dict[str, SerializedLink] = None
+    backlinks: Dict[str, SerializedBacklink]
 
     @classmethod
     def build(cls, highlight: Highlight):
@@ -60,8 +60,8 @@ class SerializedHighlight(BaseModel):
             location=highlight.location,
             note_body=highlight.note.body,
             link_preview_text=highlight.link_preview.text,
-            links=[SerializedLink.build(link) for link in highlight.links] if highlight.links else None,
-            backlinks=[SerializedBacklink.build(link) for link in highlight.backlinks],
+            links={link.id: SerializedLink.build(link) for link in highlight.links} if highlight.links else None,
+            backlinks={link.id: SerializedBacklink.build(link) for link in highlight.backlinks},
         )
 
 
@@ -73,9 +73,9 @@ class SerializedDocument(BaseModel):
     tags: List[str]
     content_type: str
     content_id: str
-    links: Dict[[str]: SerializedLink]
-    backlinks: Dict[[str]: SerializedBacklink]
-    highlights: Dict[[str]: SerializedHighlight]
+    links: Dict[str, SerializedLink]
+    backlinks: Dict[str, SerializedBacklink]
+    highlights: Dict[str, SerializedHighlight]
     content_id: str
     version: int
     # no need to store the link preview, because the link preview text is always the document title
