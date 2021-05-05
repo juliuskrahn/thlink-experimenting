@@ -34,6 +34,7 @@ def document(other_document, content, content_location, request, workspace):
 
 @pytest.fixture
 def highlight(document, content_location):
+    # no link preview text!
     return document.highlight(content_location)
 
 

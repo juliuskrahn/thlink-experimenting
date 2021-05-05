@@ -1,1 +1,1 @@
-from .document import DocumentRepository, DocumentModifiedByOtherUser
+from .document_repository import DocumentRepository, DocumentRepositoryDocument, DocumentContentUpdatedByOtherUserError

@@ -24,7 +24,7 @@ class Document(Node, Highlightable, lib.RootEntity):
         self._title = title
         self._tags = tags
         self._content = content
-        self._link_preview = link_preview
+        self._link_preview = link_preview  # text should always be the document title
         Node.__init__(self, links, backlinks)
         self._highlights = lib.ChildEntityManager(highlights)
         self._deleted = False
@@ -94,8 +94,8 @@ class Document(Node, Highlightable, lib.RootEntity):
         link._complete(self)
         return link
 
-    def highlight(self, location: ContentLocation):
-        highlight = Highlight.prepare(location)
+    def highlight(self, location: ContentLocation, link_preview_text: str = None):
+        highlight = Highlight.prepare(location, link_preview_text)
         highlight._complete(self)
         return highlight
 

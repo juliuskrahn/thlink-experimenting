@@ -26,9 +26,16 @@ class Highlight(Node, ContentLocatable, lib.ChildEntity):
         self._deleted = False
 
     @classmethod
-    def prepare(cls, location: ContentLocation):
-        return cls(lib.Id(), location=location, links=None, backlinks=[], note=None,
-                   parent=None, link_preview=LinkPreview(text=None, parent=None))
+    def prepare(cls, location: ContentLocation, link_preview_text: str = None):
+        return cls(
+            lib.Id(),
+            location=location,
+            links=None,
+            backlinks=[],
+            note=None,
+            parent=None,
+            link_preview=LinkPreview(text=link_preview_text, parent=None),
+        )
 
     def _complete(self, parent: Highlightable):
         self._parent = parent
@@ -51,14 +58,12 @@ class Highlight(Node, ContentLocatable, lib.ChildEntity):
     def make_note(self, note: Content, links: typing.List[Link] = None):
         self._delete_links()
         self._note = note
-        self._link_preview.text = note.body
         if links:
             self._complete_links(links)
 
     def delete_note(self):
         self._delete_links()
         self._note = None
-        self._link_preview.text = None
 
     @property
     def note(self):
