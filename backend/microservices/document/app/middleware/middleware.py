@@ -1,6 +1,12 @@
+from typing import Union, Dict
 from aws_lambda_powertools.middleware_factory import lambda_handler_decorator
 from aws_lambda_powertools.utilities.parser import ValidationError
+from .response_model import AppErrorResponseModel, ErrorModel
 from .error import BadOperationUserError, EntityDoesNotExistUserError
+
+
+def error(type_: str, message: Union[str, Dict]):
+    return dict(AppErrorResponseModel(app_error=ErrorModel(type=type_, message=message)))
 
 
 @lambda_handler_decorator
@@ -9,30 +15,10 @@ def middleware(handler, event, context):
         response = handler(event, context)
         return response
     except ValidationError as e:
-        return {
-            "appError": {
-                "type": "EventValidationUserError",
-                "message": e.json(),
-            },
-        }
+        return error("EventValidationUserError", e.json())
     except BadOperationUserError as e:
-        return {
-            "appError": {
-                "type": "BadOperationUserError",
-                "message": e,
-            },
-        }
+        return error("BadOperationUserError", str(e))
     except EntityDoesNotExistUserError as e:
-        return {
-            "appError": {
-                "type": "EntityDoesNotExistUserError",
-                "message": e,
-            },
-        }
+        return error("EntityDoesNotExistUserError", str(e))
     except:
-        return {
-            "appError": {
-                "type": "InternalError",
-                "message": "Oh no!",
-            },
-        }
+        return error("InternalError", "Oh no!")
