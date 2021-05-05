@@ -5,7 +5,8 @@ from domain.model.document import Workspace, ContentLocation
 from app.repository import DocumentRepository
 from app.implementation import LivingContentTypePolicy
 from app.interface import DocumentIdentifierModel, PreparedLinkModel, DocumentModel
-from app.utils import get_ref
+from app.utils import require
+from app.middleware import middleware, BadOperationUserError
 
 
 class Event(DocumentIdentifierModel, PreparedLinkModel):
@@ -16,6 +17,7 @@ class Response(DocumentModel):
     pass
 
 
+@middleware
 @event_parser(model=Event)
 def handler(event: Event, context: LambdaContext):
     document_id = lib.Id(event.document_id)
@@ -25,11 +27,12 @@ def handler(event: Event, context: LambdaContext):
     target_document_highlight_id = lib.Id(event.target_document_highlight_id)
 
     with DocumentRepository.use() as repository:
-        document = repository.get(document_id, workspace)
-        assert not LivingContentTypePolicy.is_satisfied_by(document.content.type)
+        document = require(repository, document_id, workspace)
+        if LivingContentTypePolicy.is_satisfied_by(document.content.type):
+            raise BadOperationUserError(f"Document content type must not be in {LivingContentTypePolicy.types}")
         document.link(
             location,
-            to=get_ref(repository, target_document_id, workspace, target_document_highlight_id),
+            to=require(repository, target_document_id, workspace, target_document_highlight_id),
         )
 
     return dict(Response.build(document))

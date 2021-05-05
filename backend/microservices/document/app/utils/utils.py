@@ -4,13 +4,20 @@ from domain.model.document import Link, Workspace, ContentLocation, Highlight, C
 from app.repository import DocumentRepository
 from app.implementation import THLINK_DOCUMENT
 from app.interface import PreparedLinkModel, PreparedHighlightModel
+from app.middleware import EntityDoesNotExistUserError
 
 
-def get_ref(repository: DocumentRepository, document_id: lib.Id, workspace: Workspace,
+def require(repository: DocumentRepository, document_id: lib.Id, workspace: Workspace,
             document_highlight_id: lib.Id = None):
     document = repository.get(document_id, workspace)
+    if not document:
+        raise EntityDoesNotExistUserError(f"Document(id='{document_id}', workspace='{workspace}') does not exist")
     if document_highlight_id:
-        return document.get_highlight(document_highlight_id)
+        highlight = document.get_highlight(document_highlight_id)
+        if not highlight:
+            raise EntityDoesNotExistUserError(f"Highlight(id='{document_highlight_id}') does not exist on "
+                                              f"Document(id='{document_id}', workspace='{workspace}')")
+        return highlight
     return document
 
 
@@ -21,7 +28,7 @@ def prepare_links(repository: DocumentRepository, workspace: Workspace, link_mod
         target_document_highlight_id = lib.Id(link_model.target_document_highlight_id)
         prepared_links.append(Link.prepare(
             location=ContentLocation(link_model.location),
-            target=get_ref(repository, target_document_id, workspace, target_document_highlight_id)
+            target=require(repository, target_document_id, workspace, target_document_highlight_id)
         ))
     return prepared_links
 

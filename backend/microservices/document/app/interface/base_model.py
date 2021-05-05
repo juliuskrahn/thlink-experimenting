@@ -1,4 +1,4 @@
-from pydantic import BaseModel as _BaseModel
+from aws_lambda_powertools.utilities.parser import BaseModel as _BaseModel
 
 
 class BaseModel(_BaseModel):

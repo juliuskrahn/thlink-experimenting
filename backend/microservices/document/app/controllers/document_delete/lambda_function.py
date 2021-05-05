@@ -4,6 +4,7 @@ from domain import lib
 from domain.model.document import Workspace
 from app.repository import DocumentRepository
 from app.interface import DocumentIdentifierModel
+from app.middleware import middleware
 
 
 class Event(DocumentIdentifierModel):
@@ -14,6 +15,7 @@ class Response(DocumentIdentifierModel):
     pass
 
 
+@middleware
 @event_parser(model=Event)
 def handler(event: Event, context: LambdaContext):
     document_id = lib.Id(event.document_id)
@@ -21,6 +23,7 @@ def handler(event: Event, context: LambdaContext):
 
     with DocumentRepository.use() as repository:
         document = repository.get(document_id, workspace)
-        document.delete()
+        if document:
+            document.delete()
 
     return dict(Response(document_id=document.id, workspace=document.workspace))

@@ -4,6 +4,8 @@ from domain import lib
 from domain.model.document import Workspace
 from app.repository import DocumentRepository
 from app.interface import DocumentHighlightIdentifierModel, DocumentModel
+from app.utils import require
+from app.middleware import middleware
 
 
 class Event(DocumentHighlightIdentifierModel):
@@ -14,6 +16,7 @@ class Response(DocumentModel):
     pass
 
 
+@middleware
 @event_parser(model=Event)
 def handler(event: Event, context: LambdaContext):
     document_id = lib.Id(event.document_id)
@@ -21,7 +24,9 @@ def handler(event: Event, context: LambdaContext):
     document_highlight_id = lib.Id(event.document_highlight_id)
 
     with DocumentRepository.use() as repository:
-        document = repository.get(document_id, workspace)
-        document.get_highlight(document_highlight_id).delete()
+        document = require(repository, document_id, workspace)
+        highlight = document.get_highlight(document_highlight_id)
+        if highlight:
+            highlight.delete()
 
     return dict(Response.build(document))

@@ -5,6 +5,7 @@ from app.repository import DocumentRepository
 from app.implementation import ContentTypePolicy
 from app.interface import PreparedDocumentModel, DocumentModel
 from app.utils import prepare_links, prepare_highlights
+from app.middleware import middleware, BadOperationUserError
 
 
 class Event(PreparedDocumentModel):
@@ -15,10 +16,11 @@ class Response(DocumentModel):
     pass
 
 
+@middleware
 @event_parser(model=Event)
 def handler(event: Event, context: LambdaContext):
-    assert ContentTypePolicy.is_satisfied_by(event.content_type),\
-        f"Content Type must be one of {ContentTypePolicy.types}."
+    if not ContentTypePolicy.is_satisfied_by(event.content_type):
+        raise BadOperationUserError("Invalid content type")
 
     workspace = Workspace(event.workspace)
     content = Content(event.content_body, event.content_type)

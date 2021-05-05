@@ -57,7 +57,7 @@ class DB:
             self._table.put_item(Item=item, ConditionExpression=condition_expression)
         except botocore.exceptions.ClientError as e:
             if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                raise ExpectationNotMet
+                raise ExpectationNotMet from e
             raise
 
     def update(self, key: ItemKey, item: typing.Dict, old_item: typing.Dict):

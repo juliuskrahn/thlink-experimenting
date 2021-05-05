@@ -5,7 +5,8 @@ from domain.model.document import Workspace, Content
 from app.repository import DocumentRepository
 from app.implementation import THLINK_DOCUMENT
 from app.interface import DocumentHighlightIdentifierModel, HighlightMakeNoteModel, DocumentModel
-from app.utils import prepare_links
+from app.utils import require, prepare_links
+from app.middleware import middleware
 
 
 class Event(DocumentHighlightIdentifierModel, HighlightMakeNoteModel):
@@ -16,6 +17,7 @@ class Response(DocumentModel):
     pass
 
 
+@middleware
 @event_parser(model=Event)
 def handler(event: Event, context: LambdaContext):
     document_id = lib.Id(event.document_id)
@@ -24,7 +26,7 @@ def handler(event: Event, context: LambdaContext):
 
     with DocumentRepository.use() as repository:
         document = repository.get(document_id, workspace)
-        highlight = document.get_highlight(document_highlight_id)
+        highlight = require(repository, document_id, workspace, document_highlight_id)
         if event.note_body:
             note = Content(event.note_body, THLINK_DOCUMENT)
             links = prepare_links(repository, workspace, event.links) if event.links else []

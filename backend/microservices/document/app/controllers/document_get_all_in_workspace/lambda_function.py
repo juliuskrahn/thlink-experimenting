@@ -4,6 +4,7 @@ from aws_lambda_powertools.utilities.parser import event_parser
 from domain.model.document import Workspace
 from app.repository import DocumentRepository
 from app.interface import BaseModel, WorkspaceIdentifierModel, DocumentModel
+from app.middleware import middleware
 
 
 class Event(WorkspaceIdentifierModel):
@@ -14,6 +15,7 @@ class Response(BaseModel):
     documents: List[DocumentModel]
 
 
+@middleware
 @event_parser(model=Event)
 def handler(event: Event, context: LambdaContext):
     workspace = Workspace(event.workspace)

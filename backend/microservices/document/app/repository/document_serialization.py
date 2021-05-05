@@ -1,5 +1,5 @@
 from typing import List, Dict
-from pydantic import BaseModel
+from aws_lambda_powertools.utilities.parser import BaseModel
 from domain.model.document import Link, Highlight
 from .document import DocumentRepositoryDocument
 
