@@ -66,7 +66,7 @@ class DocumentRepository(AbstractDocumentRepository):
 
     def add(self, document: Document):
         self._documents[(document.id, document.workspace)] = document
-        DocumentRepositoryDocument._repository_init(document, version=0, content_id=lib.Id())
+        DocumentRepositoryDocument._repository_init(document, version=1, content_id=lib.Id())
 
     def _save(self):
         for document in set(self._collect_dirty_documents()):  # deduplicate
@@ -78,14 +78,13 @@ class DocumentRepository(AbstractDocumentRepository):
             if document_loaded:
                 self._db.delete(db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)))
                 self._object_storage.delete(document.content_id.value)
-        elif document_loaded and document.content:  # TODO mechanism to test content change !
+        elif document_loaded and document.version == document_loaded.version:
             self._db.update(
                 key=db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)),
                 item=self._document_serializer.serialize_document(document),
                 old_item=self._document_serializer.serialize_document(document_loaded),
             )
         else:
-            document.version += 1
             try:
                 self._db.put(
                     key=db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)),

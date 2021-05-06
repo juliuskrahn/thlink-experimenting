@@ -2,7 +2,7 @@ import typing
 import dataclasses
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Content:
     body: typing.Any
     type: str
