@@ -60,8 +60,8 @@ class SerializedHighlight(BaseModel):
             location=str(highlight.location),
             note_body=highlight.note.body,
             link_preview_text=highlight.link_preview.text,
-            links={link.id: SerializedLink.build(link) for link in highlight.links} if highlight.links else None,
-            backlinks={link.id: SerializedBacklink.build(link) for link in highlight.backlinks},
+            links={str(link.id): SerializedLink.build(link) for link in highlight.links} if highlight.links else None,
+            backlinks={str(link.id): SerializedBacklink.build(link) for link in highlight.backlinks},
         )
 
 
@@ -90,9 +90,9 @@ class SerializedDocument(BaseModel):
             tags=document.tags,
             content_type=document.content.type,
             content_id=str(document.content_id),
-            links={link.id: SerializedLink.build(link) for link in document.links},
-            backlinks={link.id: SerializedBacklink.build(link) for link in document.links},
-            highlights={highlight.id: SerializedHighlight.build(highlight) for highlight in document.highlights},
+            links={str(link.id): SerializedLink.build(link) for link in document.links},
+            backlinks={str(link.id): SerializedBacklink.build(link) for link in document.links},
+            highlights={str(highlight.id): SerializedHighlight.build(highlight) for highlight in document.highlights},
         )
 
 

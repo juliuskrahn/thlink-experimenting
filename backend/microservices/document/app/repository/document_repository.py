@@ -33,7 +33,7 @@ class DocumentRepository(AbstractDocumentRepository):
         document = self._documents.get((document_id, workspace))
         if document:
             return document
-        if self._document_factory.document_id == document_id:
+        if document_id in self._document_factory.document_ids:
             raise RecursionError("Attempted to get a document that is currently being build")
         db_item = self._db.get_item(db.ItemKey("workspace", workspace, secondary=db.ItemKey("id", document_id)))
         if not db_item:
@@ -145,14 +145,14 @@ class DocumentFactory:
         self._links: Dict[lib.Id, Link] = {}  # key -> link id
         self._link_previews: Dict[lib.Id, LinkPreview] = {}  # key -> document id/ document highlight id
 
-        # Store the id of the document that is currently being build so that the document repository can prevent
+        # Store the id of the documents that are currently being build so that the document repository can prevent
         # bootstrapping loops
-        self._document_id = None
+        self._document_ids = []
 
     def build_document(self, serialized: SerializedDocument, content_body_getter: Callable)\
             -> DocumentRepositoryDocument:
         document_id = lib.Id(serialized.id)
-        self._document_id = document_id
+        self._document_ids.append(document_id)
         workspace = Workspace(serialized.workspace)
         content_id = lib.Id(serialized.content_id)
         document_link_preview = self._get_link_preview(
@@ -192,7 +192,7 @@ class DocumentFactory:
             highlights=highlights,
         )
         document._repository_init(serialized.version, content_id)
-        self._document_id = None
+        self._document_ids.remove(document_id)
         return document
 
     def _get_link(self,
@@ -318,8 +318,8 @@ class DocumentFactory:
         )
 
     @property
-    def document_id(self):
-        return self._document_id
+    def document_ids(self):
+        return self._document_ids
 
 
 class DocumentContentUpdatedByOtherUserError(ValueError):
