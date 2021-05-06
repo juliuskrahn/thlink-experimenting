@@ -8,6 +8,8 @@ import boto3.dynamodb.conditions
 class ItemKey:
 
     def __init__(self, name, value, secondary: ItemKey = None):
+        if secondary and secondary.secondary:
+            raise ValueError("ItemKey can only consist of one primary and one secondary key")
         self.name = name
         self.value = value
         self.secondary = secondary
@@ -17,14 +19,15 @@ class ItemKey:
 
     def as_dynamodb_key(self):
         return {*{self.name: self.value}, *(self.secondary.as_dynamodb_key() if self.secondary else {})}
-
-
+    
+    
 class DB:
 
-    def __init__(self):
-        self._table = boto3.resource("dynamodb").Table("Document")
+    def __init__(self, name: str):
+        self._table = boto3.resource("dynamodb").Table(name)
 
-    def query_items(self, key):
+    def query_items(self, key: ItemKey):
+        # query primary key
         try:
             resp = self._table.query(
                 IndexName=key.name,
@@ -41,9 +44,9 @@ class DB:
         except botocore.exceptions.ClientError as e:
             raise
 
-    def put(self, key: ItemKey, item, expect_if_item_exists: typing.Dict = None):
+    def put(self, key: ItemKey, item: typing.Dict, expect_if_item_exists: typing.Dict = None):
         assert key.name in item
-        assert not key.secondary or key.secondary in item
+        assert not key.secondary or key.secondary.name in item
         expression_values = {}
         statements = []
         for name, value in expect_if_item_exists.items():
@@ -62,7 +65,7 @@ class DB:
 
     def update(self, key: ItemKey, item: typing.Dict, old_item: typing.Dict):
         assert key.name in item
-        assert not key.secondary or key.secondary in item
+        assert not key.secondary or key.secondary.name in item
 
         def build_expression():  # apply diff
             statements = []

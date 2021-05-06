@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List, Generator, ContextManager, Dict, Callable, Union, Tuple
-from copy import deepcopy
+import contextlib
 from domain import lib
 from domain.model.document.link import LinkPreview
 from domain.model.document import Document, Workspace, Link, Highlight, Content, ContentLocation
@@ -16,38 +16,43 @@ class DocumentRepository(AbstractDocumentRepository):
 
     def __init__(self):
         self._documents: Dict[Tuple[lib.Id, Workspace], DocumentRepositoryDocument] = {}
-        self._documents_loaded: Dict[Tuple[lib.Id, Workspace], DocumentRepositoryDocument] = {}
-        self._db = db.DB()
-        self._object_storage = object_storage.ObjectStorage()
+        self._documents_loaded_serialized: Dict[Tuple[lib.Id, Workspace], SerializedDocument] = {}
+        self._db = db.DocumentRepositoryDB()
+        self._object_storage = object_storage.DocumentRepositoryObjectStorage()
         self._document_factory = DocumentFactory(self)
         self._document_serializer = DocumentSerializer()
 
     @classmethod
+    @contextlib.contextmanager
     def use(cls) -> ContextManager[DocumentRepository]:
         repository = cls()
         yield repository
         repository._save()
 
-    def get(self, document_id: lib.Id, workspace: Workspace) -> DocumentRepositoryDocument:
+    def get(self, document_id: lib.Id, workspace: Workspace) -> Union[DocumentRepositoryDocument, None]:
         document = self._documents.get((document_id, workspace))
         if document:
             return document
         if self._document_factory.document_id == document_id:
             raise RecursionError("Attempted to get a document that is currently being build")
         db_item = self._db.get_item(db.ItemKey("workspace", workspace, secondary=db.ItemKey("id", document_id)))
+        if not db_item:
+            return None
         document = self._document_factory.build_document(
             SerializedDocument(**db_item),
             content_body_getter=lambda content_id: self._object_storage.get(content_id),
         )
         self._documents[(document.id, document.workspace)] = document
-        self._documents_loaded[(document.id, document.workspace)] = deepcopy(document)
+        self._documents_loaded_serialized[(document.id, document.workspace)] = SerializedDocument(**db_item)
         return document
 
     def get_all_in_workspace(self, workspace: Workspace) -> List[DocumentRepositoryDocument]:
-        for document in self._documents_loaded:
+        for document in self._documents_loaded_serialized.values():
             if document.workspace == workspace:
                 assert ValueError("Workspace is already partially loaded")
         db_items = self._db.query_items(db.ItemKey("workspace", workspace))
+        if not db_items:
+            return []
         documents = []
         for db_item in db_items:
             document = self._document_factory.build_document(
@@ -56,7 +61,7 @@ class DocumentRepository(AbstractDocumentRepository):
             )
             documents.append(document)
             self._documents[(document.id, document.workspace)] = document
-            self._documents_loaded[(document.id, document.workspace)] = deepcopy(document)
+            self._documents_loaded_serialized[(document.id, document.workspace)] = SerializedDocument(**db_item)
         return documents
 
     def add(self, document: Document):
@@ -68,12 +73,12 @@ class DocumentRepository(AbstractDocumentRepository):
             self._save_document(document)
 
     def _save_document(self, document: DocumentRepositoryDocument):
-        document_loaded = self._documents_loaded.get((document.id, document.workspace))
+        document_loaded = self._documents_loaded_serialized.get((document.id, document.workspace))
         if document.deleted:
             if document_loaded:
                 self._db.delete(db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)))
                 self._object_storage.delete(document.content_id.value)
-        elif document_loaded and document_loaded.content == document.content:
+        elif document_loaded and document.content:  # TODO mechanism to test content change !
             self._db.update(
                 key=db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)),
                 item=self._document_serializer.serialize_document(document),
@@ -93,13 +98,8 @@ class DocumentRepository(AbstractDocumentRepository):
             # TODO Saga Pattern
 
     def _document_is_dirty(self, document: DocumentRepositoryDocument):
-        document_loaded = self._documents_loaded.get((document.id, document.workspace))
-
-        def document_mutated():
-            return self._document_serializer.serialize_document(document_loaded) \
-                   != self._document_serializer.serialize_document(document)
-
-        return not document_loaded or document_mutated()
+        document_loaded = self._documents_loaded_serialized.get((document.id, document.workspace))
+        return not document_loaded or document_loaded != self._document_serializer.serialize_document(document)
 
     def _collect_dirty_documents(self) -> Generator[DocumentRepositoryDocument]:
         # May yield duplicates
@@ -114,24 +114,24 @@ class DocumentRepository(AbstractDocumentRepository):
         # Causes for indirect dirty documents are link preview changes on entities that are referenced by other entities
         # which might not be loaded.
 
-        document_loaded = self._documents_loaded.get((document.id, document.workspace))
+        document_loaded = self._documents_loaded_serialized.get((document.id, document.workspace))
         if not document_loaded:
             # all changes must have been registered by referencing entities - so they are already known to be dirty
-            raise StopIteration
+            return
 
-        document_link_targets_are_dirty = document_loaded.link_preview != document.link_preview
+        document_link_preview_changed = document_loaded.title != document.title
 
-        if document_link_targets_are_dirty:
+        if document_link_preview_changed:
             for link in document.links:
                 yield link.target
 
-        def highlight_link_targets_are_dirty(highlight: Highlight):
-            loaded_highlight = document_loaded.get_highlight(highlight.id)
+        def highlight_link_preview_changed(highlight: Highlight):
+            loaded_highlight = document_loaded.highlights.get(str(highlight.id))
             return loaded_highlight and loaded_highlight.links \
-                and loaded_highlight.link_preview != highlight.link_preview
+                and (loaded_highlight.link_preview_text != highlight.link_preview.text or document_link_preview_changed)
 
         for document_highlight in document.highlights:
-            if highlight_link_targets_are_dirty(document_highlight):
+            if highlight_link_preview_changed(document_highlight):
                 for link in document_highlight.links:
                     yield link.target
 

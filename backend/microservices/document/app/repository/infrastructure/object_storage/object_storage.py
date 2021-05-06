@@ -4,9 +4,9 @@ import botocore.exceptions
 
 class ObjectStorage:
 
-    def __init__(self):
+    def __init__(self, name: str):
         self._client = boto3.client("s3")
-        self._bucket = "DocumentContent"
+        self._bucket = name
 
     def get(self, id_: str):
         try:
