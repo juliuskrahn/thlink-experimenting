@@ -30,7 +30,7 @@ class Lazy:
         # override __copy__() and __deepcopy__() as well.
         self.__dict__['_get_wrapped'] = getter
         self._wrapped = empty
-        self._known_properties = known_properties
+        self.__dict__["_known_properties"] = known_properties
 
     def __getattr__(self, name):
         if self._wrapped is empty and name in self._known_properties:
@@ -38,7 +38,7 @@ class Lazy:
         else:
             if self._wrapped is empty:
                 self._setup()
-            getattr(self._wrapped, name)
+            return getattr(self._wrapped, name)
 
     def __setattr__(self, name, value):
         if name == "_wrapped":
