@@ -202,6 +202,9 @@ class DocumentFactory:
                   serialized: Union[SerializedLink, SerializedBacklink],
                   scope: Union[Document, Highlight],
                   ):
+        # scope entry -> entry of the document (/highlight) to build
+        # across entry -> other entry
+
         link_id = lib.Id(serialized_id)
         link = self._links.get(link_id)
         if link:
