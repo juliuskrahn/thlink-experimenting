@@ -104,7 +104,7 @@ class DocumentModel(PreparedDocumentModel):
             contentType=document.content.type,
             contentBody=document.content.body if with_content_body else None,
             links=[LinkModel.build(link) for link in document.links],
-            backlinks=[BacklinkModel.build(link) for link in document.links],
+            backlinks=[BacklinkModel.build(link) for link in document.backlinks],
             highlights=[HighlightModel.build(highlight) for highlight in document.highlights],
         )
 

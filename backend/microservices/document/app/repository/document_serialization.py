@@ -91,7 +91,7 @@ class SerializedDocument(BaseModel):
             content_type=document.content.type,
             content_id=str(document.content_id),
             links={str(link.id): SerializedLink.build(link) for link in document.links},
-            backlinks={str(link.id): SerializedBacklink.build(link) for link in document.links},
+            backlinks={str(link.id): SerializedBacklink.build(link) for link in document.backlinks},
             highlights={str(highlight.id): SerializedHighlight.build(highlight) for highlight in document.highlights},
         )
 
