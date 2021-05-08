@@ -33,4 +33,4 @@ def handler(event: Event, context: LambdaContext):
             links = prepare_links(repository, workspace, event.links) if event.links else []
             highlight.make_note(note, links)
 
-    return dict(Response.build(document))
+    return Response.build(document).dict(by_alias=True)

@@ -37,7 +37,7 @@ def handler(event: Event, context: LambdaContext):
             highlights = prepare_highlights(repository, workspace, event.highlights) if event.highlights else []
             document.update_content(content, links, highlights)
 
-        return dict(Response.build(document, with_content_body=True))
+        return Response.build(document, with_content_body=True).dict(by_alias=True)
 
     except DocumentContentUpdatedByOtherUserError:
         raise BadOperationUserError("Document content updated by other user")

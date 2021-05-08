@@ -29,4 +29,4 @@ def handler(event: Event, context: LambdaContext):
         if highlight:
             highlight.delete()
 
-    return dict(Response.build(document))
+    return Response.build(document).dict(by_alias=True)

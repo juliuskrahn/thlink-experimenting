@@ -35,4 +35,4 @@ def handler(event: Event, context: LambdaContext):
             to=require(repository, target_document_id, workspace, target_document_highlight_id),
         )
 
-    return dict(Response.build(document))
+    return Response.build(document).dict(by_alias=True)

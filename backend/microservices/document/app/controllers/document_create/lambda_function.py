@@ -40,4 +40,4 @@ def handler(event: Event, context: LambdaContext):
 
         repository.add(document)
 
-    return dict(Response.build(document, with_content_body=True))
+    return Response.build(document, with_content_body=True).dict(by_alias=True)

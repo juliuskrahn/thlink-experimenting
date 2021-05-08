@@ -26,4 +26,4 @@ def handler(event: Event, context: LambdaContext):
         document = require(repository, document_id, workspace)
         document.tag(event.tag)
 
-    return dict(Response.build(document))
+    return Response.build(document).dict(by_alias=True)

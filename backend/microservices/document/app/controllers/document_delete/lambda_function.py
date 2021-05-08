@@ -26,4 +26,4 @@ def handler(event: Event, context: LambdaContext):
         if document:
             document.delete()
 
-    return dict(Response(document_id=document.id, workspace=document.workspace))
+    return Response(document_id=document.id, workspace=document.workspace).dict(by_alias=True)

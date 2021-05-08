@@ -34,4 +34,4 @@ def handler(event: Event, context: LambdaContext):
         else:
             highlight.delete_note()
 
-    return dict(Response.build(document))
+    return Response.build(document).dict(by_alias=True)

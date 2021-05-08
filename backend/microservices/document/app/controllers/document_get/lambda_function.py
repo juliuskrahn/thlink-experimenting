@@ -25,4 +25,4 @@ def handler(event: Event, context: LambdaContext):
     with DocumentRepository.use() as repository:
         document = require(repository, document_id, workspace)
 
-    return dict(Response.build(document, with_content_body=True))
+    return Response.build(document, with_content_body=True).dict(by_alias=True)
