@@ -4,7 +4,7 @@ from domain.model.document import Document, Workspace, Content
 from app.repository import DocumentRepository
 from app.implementation import ContentTypePolicy
 from app.interface import PreparedDocumentModel, DocumentModel
-from app.utils import prepare_links, prepare_highlights
+from app.utils import prepare_links
 from app.middleware import middleware, BadOperationUserError
 
 
@@ -27,7 +27,6 @@ def handler(event: Event, context: LambdaContext):
 
     with DocumentRepository.use() as repository:
         links = prepare_links(repository, workspace, event.links) if event.links else []
-        highlights = prepare_highlights(repository, workspace, event.highlights) if event.highlights else []
 
         document = Document.create(
             workspace,
@@ -35,7 +34,7 @@ def handler(event: Event, context: LambdaContext):
             event.tags,
             content,
             links,
-            highlights,
+            highlights=[],
         )
 
         repository.add(document)

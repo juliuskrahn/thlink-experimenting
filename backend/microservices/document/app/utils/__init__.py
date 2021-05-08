@@ -1,1 +1,1 @@
-from .utils import require, prepare_links, prepare_highlights
+from .utils import require, prepare_links

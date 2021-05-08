@@ -5,15 +5,14 @@ from domain import lib
 from domain.model.document import Workspace, Content
 from app.repository import DocumentRepository, DocumentContentUpdatedByOtherUserError
 from app.implementation import LivingContentTypePolicy
-from app.interface import DocumentIdentifierModel, PreparedLinkModel, PreparedHighlightModel, DocumentModel
-from app.utils import require, prepare_links, prepare_highlights
+from app.interface import DocumentIdentifierModel, PreparedLinkModel, DocumentModel
+from app.utils import require, prepare_links
 from app.middleware import middleware, BadOperationUserError
 
 
 class Event(DocumentIdentifierModel):
     content_body: Any
     links: List[PreparedLinkModel] = None
-    highlights: List[PreparedHighlightModel] = None
 
 
 class Response(DocumentModel):
@@ -34,8 +33,7 @@ def handler(event: Event, context: LambdaContext):
                 raise BadOperationUserError(f"Document content type must be in {LivingContentTypePolicy.types}")
             content = Content(event.content_body, document.content.type)
             links = prepare_links(repository, workspace, event.links) if event.links else []
-            highlights = prepare_highlights(repository, workspace, event.highlights) if event.highlights else []
-            document.update_content(content, links, highlights)
+            document.update_content(content, links, highlights=[])
 
         return Response.build(document, with_content_body=True).dict(by_alias=True)
 

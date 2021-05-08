@@ -24,7 +24,8 @@ def handler(event: Event, context: LambdaContext):
     workspace = Workspace(event.workspace)
     location = ContentLocation(event.location)
     target_document_id = lib.Id(event.target_document_id)
-    target_document_highlight_id = lib.Id(event.target_document_highlight_id)
+    target_document_highlight_id = lib.Id(event.target_document_highlight_id)\
+        if event.target_document_highlight_id else None
 
     with DocumentRepository.use() as repository:
         document = require(repository, document_id, workspace)
