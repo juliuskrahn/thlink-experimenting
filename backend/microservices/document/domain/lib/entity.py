@@ -113,7 +113,7 @@ class ChildEntityManager:
         return self._dict.values()
 
     def get(self, id_: Id):
-        return self._dict[id_]
+        return self._dict.get(id_)
 
     def register(self, entity: Entity):
         self._dict[entity.id] = entity
