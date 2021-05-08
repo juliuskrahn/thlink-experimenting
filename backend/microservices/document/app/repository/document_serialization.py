@@ -58,7 +58,7 @@ class SerializedHighlight(BaseModel):
     def build(cls, highlight: Highlight):
         return cls(
             location=str(highlight.location),
-            note_body=highlight.note.body,
+            note_body=highlight.note.body if highlight.note else None,
             link_preview_text=highlight.link_preview.text,
             links={str(link.id): SerializedLink.build(link) for link in highlight.links} if highlight.links else None,
             backlinks={str(link.id): SerializedBacklink.build(link) for link in highlight.backlinks},

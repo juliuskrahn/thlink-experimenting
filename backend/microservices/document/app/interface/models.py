@@ -71,7 +71,7 @@ class HighlightModel(PreparedHighlightModel):
         return cls(
             id=str(highlight.id),
             location=str(highlight.location),
-            noteBody=highlight.note.body,
+            noteBody=highlight.note.body if highlight.note else None,
             linkPreviewText=highlight.link_preview.text,
             links=[LinkModel.build(link) for link in highlight.links] if highlight.links else None,
             backlinks=[BacklinkModel.build(link) for link in highlight.backlinks],

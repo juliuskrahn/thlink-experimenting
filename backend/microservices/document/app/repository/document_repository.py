@@ -317,7 +317,7 @@ class DocumentFactory:
             known_non_properties=["workspace"],
         )
         links = [self._get_link(ser_link_id, serialized.links[ser_link_id], lazy_highlight)
-                 for ser_link_id in serialized.links]
+                 for ser_link_id in serialized.links] if serialized.links else []
         backlinks = [self._get_link(ser_link_id, serialized.backlinks[ser_link_id], lazy_highlight)
                      for ser_link_id in serialized.backlinks]
         return Highlight(
