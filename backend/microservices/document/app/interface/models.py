@@ -13,19 +13,19 @@ class PreparedLinkModel(BaseModel):
 class LinkModel(PreparedLinkModel):
     id: str
     target_document_preview_text: str
-    target_document_highlight_preview_text: str
+    target_document_highlight_preview_text: str = None
 
     @classmethod
     def build(cls, link: Link):
         target_is_highlight = hasattr(link.target, "parent")
         return cls(
-            id=link.id,
-            location=link.location,
-            target_document_id=link.target.parent.id if target_is_highlight else link.target.id,
-            target_document_highlight_id=link.target.id if target_is_highlight else None,
-            target_document_preview_text=link.target_preview.parent.text if target_is_highlight
+            id=str(link.id),
+            location=str(link.location),
+            targetDocumentId=str(link.target.parent.id) if target_is_highlight else str(link.target.id),
+            targetDocumentDighlightId=str(link.target.id) if target_is_highlight else None,
+            targetDocumentPreviewText=link.target_preview.parent.text if target_is_highlight
             else link.target_preview.text,
-            target_document_highlight_preview_text=link.target_preview.text if target_is_highlight else None,
+            targetDocumentHighlightPreviewText=link.target_preview.text if target_is_highlight else None,
         )
 
 
@@ -41,13 +41,13 @@ class BacklinkModel(BaseModel):
     def build(cls, link: Link):
         source_is_highlight = hasattr(link.source, "parent")
         return cls(
-            id=link.id,
-            location=link.location,
-            source_document_id=link.source.parent.id if source_is_highlight else link.source.id,
-            source_document_highlight_id=link.source.id if source_is_highlight else None,
-            source_document_preview_text=link.source_preview.parent.text if source_is_highlight
+            id=str(link.id),
+            location=str(link.location),
+            sourceDocumentId=str(link.source.parent.id) if source_is_highlight else str(link.source.id),
+            sourceDocumentHighlightId=str(link.source.id) if source_is_highlight else None,
+            sourceDocumentPreviewText=link.source_preview.parent.text if source_is_highlight
             else link.source_preview.text,
-            source_document_highlight_preview_text=link.source_preview.text if source_is_highlight else None,
+            sourceDocumentHighlightPreviewText=link.source_preview.text if source_is_highlight else None,
         )
 
 
@@ -69,10 +69,10 @@ class HighlightModel(PreparedHighlightModel):
     @classmethod
     def build(cls, highlight: Highlight):
         return cls(
-            id=highlight.id,
-            location=highlight.location,
-            note_body=highlight.note.body,
-            link_preview_text=highlight.link_preview.text,
+            id=str(highlight.id),
+            location=str(highlight.location),
+            noteBody=highlight.note.body,
+            linkPreviewText=highlight.link_preview.text,
             links=[LinkModel.build(link) for link in highlight.links] if highlight.links else None,
             backlinks=[BacklinkModel.build(link) for link in highlight.backlinks],
         )
@@ -97,12 +97,12 @@ class DocumentModel(PreparedDocumentModel):
     @classmethod
     def build(cls, document: DocumentRepositoryDocument, with_content_body=False):
         return cls(
-            id=document.id,
-            workspace=document.workspace,
+            id=str(document.id),
+            workspace=str(document.workspace),
             title=document.title,
             tags=document.tags,
-            content_type=document.content.type,
-            content_body=document.content.body if with_content_body else None,
+            contentType=document.content.type,
+            contentBody=document.content.body if with_content_body else None,
             links=[LinkModel.build(link) for link in document.links],
             backlinks=[BacklinkModel.build(link) for link in document.links],
             highlights=[HighlightModel.build(highlight) for highlight in document.highlights],
