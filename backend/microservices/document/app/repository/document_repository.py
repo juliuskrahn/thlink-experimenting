@@ -102,7 +102,9 @@ class DocumentRepository(AbstractDocumentRepository):
 
     def _collect_dirty_documents(self) -> Generator[DocumentRepositoryDocument]:
         # May yield duplicates
-        for document in self._documents.values():
+
+        # Loop over a static copy because _collect_indirect_dirty_documents might load new documents
+        for document in [*self._documents.values()]:
             if self._document_is_dirty(document):
                 for indirect in self._collect_indirect_dirty_documents(document):
                     yield indirect
