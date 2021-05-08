@@ -1,4 +1,4 @@
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 import abc
 import copy
 import operator
@@ -25,18 +25,21 @@ class Lazy:
     # Avoid infinite recursion when tracing __init__
     _wrapped = None
 
-    def __init__(self, getter: Callable, known_properties: Dict = None):
+    def __init__(self, getter: Callable, known_properties: Dict = None, known_non_properties: List = None):
         # Note: if a subclass overrides __init__(), it will likely need to
         # override __copy__() and __deepcopy__() as well.
         self.__dict__['_get_wrapped'] = getter
         self._wrapped = empty
-        self.__dict__["_known_properties"] = known_properties
+        self.__dict__["_known_properties"] = known_properties if known_properties else {}
+        self.__dict__["_known_non_properties"] = known_non_properties if known_non_properties else []
 
     def __getattr__(self, name):
         if self._wrapped is empty and name in self._known_properties:
             return self._known_properties[name]
         else:
             if self._wrapped is empty:
+                if name in self._known_non_properties:
+                    raise AttributeError()
                 self._setup()
             return getattr(self._wrapped, name)
 
@@ -53,6 +56,8 @@ class Lazy:
         if name == "_wrapped":
             raise TypeError("Can't delete _wrapped.")
         if self._wrapped is empty:
+            if name in self._known_non_properties:
+                raise AttributeError()
             self._setup()
         delattr(self._wrapped, name)
 
