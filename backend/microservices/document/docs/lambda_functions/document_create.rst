@@ -1,5 +1,5 @@
-Document Create (Lambda Fn)
-===========================
+Document Create
+===============
 
 .. autopydantic_model:: app.controllers.document_create.lambda_function.Event
 

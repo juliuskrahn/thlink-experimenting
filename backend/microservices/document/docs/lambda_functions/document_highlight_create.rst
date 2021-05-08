@@ -1,5 +1,5 @@
-Document Highlight Create (Lambda Fn)
-=====================================
+Document Highlight Create
+=========================
 
 .. autopydantic_model:: app.controllers.document_highlight_create.lambda_function.Event
 
