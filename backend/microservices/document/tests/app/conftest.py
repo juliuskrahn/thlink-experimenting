@@ -116,3 +116,31 @@ def controller_other_created_document(lambda_context):
         "highlights": [],
     }
     return handler(event.copy(), lambda_context)
+
+
+@pytest.fixture
+def controller_created_document_highlight_id(lambda_context, controller_created_document):
+    from app.controllers.document_highlight_create.lambda_function import handler
+    event = {
+        "documentId": controller_created_document["id"],
+        "workspace": controller_created_document["workspace"],
+        "location": "6:15",
+        "linkPreviewText": "Lorem",
+    }
+    response = handler(event.copy(), lambda_context)
+    return response["highlights"][0]["id"]
+
+
+@pytest.fixture
+def controller_created_document_living_content(lambda_context):
+    from app.controllers.document_create.lambda_function import handler
+    event = {
+        "workspace": "MyWorkspace",
+        "title": "MyDocument",
+        "tags": ["Important"],
+        "contentType": "thlink-document",
+        "contentBody": "Lorem ipsum",
+        "links": [],
+        "highlights": [],
+    }
+    return handler(event.copy(), lambda_context)

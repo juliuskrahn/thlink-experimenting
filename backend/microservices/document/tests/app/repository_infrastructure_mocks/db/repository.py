@@ -34,7 +34,7 @@ class DocumentRepositoryDB:
         assert not key.secondary or key.secondary.name in item
         existing = self.get_item(key, count=False)
         if existing:
-            for name, value in expect_if_item_exists.values():
+            for name, value in expect_if_item_exists.items():
                 if existing.get(name) != value:
                     raise ExpectationNotMet()
         DocumentRepositoryDB._table[self._key_for_table(key)] = item
