@@ -81,14 +81,14 @@ class DocumentRepository(AbstractDocumentRepository):
         elif document_loaded and document.version == document_loaded.version:
             self._db.update(
                 key=db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)),
-                item=self._document_serializer.serialize_document(document),
-                old_item=self._document_serializer.serialize_document(document_loaded),
+                item=dict(self._document_serializer.serialize_document(document)),
+                old_item=dict(document_loaded),
             )
         else:
             try:
                 self._db.put(
                     key=db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)),
-                    item=self._document_serializer.serialize_document(document),
+                    item=dict(self._document_serializer.serialize_document(document)),
                     expect_if_item_exists={"version": document.version - 1}
                 )
             except db.ExpectationNotMet:
@@ -268,14 +268,19 @@ class DocumentFactory:
                     return self._document_repository.get(across_document_id, scope.workspace)\
                         .get_highlight(across_document_highlight_id)
 
+                across_known_non_properties = ["workspace"]
+
             else:
-                across_known_properties["id"] = across_document_id,
+                across_known_properties["id"] = across_document_id
                 across_known_properties["workspace"] = scope.workspace
 
                 def getter():
                     return self._document_repository.get(across_document_id, scope.workspace)
 
-            return lib.Lazy(getter=getter, known_properties=across_known_properties)
+                across_known_non_properties = ["parent"]
+
+            return lib.Lazy(getter=getter,
+                            known_properties=across_known_properties, known_non_properties=across_known_non_properties)
 
         across = get_across()
 

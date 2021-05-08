@@ -99,5 +99,5 @@ class SerializedDocument(BaseModel):
 class DocumentSerializer:
 
     @staticmethod
-    def serialize_document(document: DocumentRepositoryDocument) -> Dict:
-        return dict(SerializedDocument.build(document))
+    def serialize_document(document: DocumentRepositoryDocument) -> SerializedDocument:
+        return SerializedDocument.build(document)
