@@ -8,5 +8,4 @@ class ErrorModel(BaseModel):
 
 
 class AppErrorResponseModel(BaseModel):
-
     app_error: ErrorModel = None
