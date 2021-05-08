@@ -34,7 +34,7 @@ class DocumentRepository(AbstractDocumentRepository):
         if document:
             return document
         if document_id in self._document_factory.document_ids:
-            raise RecursionError("Attempted to get a document that is currently being build")
+            raise ValueError("Attempted to get a document that is currently being build")
         db_item = self._db.get_item(db.ItemKey("workspace", workspace, secondary=db.ItemKey("id", document_id)))
         if not db_item:
             return None
@@ -210,6 +210,8 @@ class DocumentFactory:
         if link:
             return link
 
+        workspace = scope.workspace if hasattr(scope, "workspace") else scope.parent.workspace
+
         across_is_target = as_link = isinstance(serialized, SerializedLink)
 
         def get_across() -> Union[Document, Highlight]:
@@ -260,22 +262,22 @@ class DocumentFactory:
             if across_is_of_type_highlight:
                 across_known_properties["id"] = across_document_highlight_id
                 across_known_properties["parent"] = lib.Lazy(
-                    getter=lambda: self._document_repository.get(across_document_id, scope.workspace),
-                    known_properties={"id": across_document_id, "workspace": scope.workspace},
+                    getter=lambda: self._document_repository.get(across_document_id, workspace),
+                    known_properties={"id": across_document_id, "workspace": workspace},
                 )
 
                 def getter():
-                    return self._document_repository.get(across_document_id, scope.workspace)\
+                    return self._document_repository.get(across_document_id, workspace)\
                         .get_highlight(across_document_highlight_id)
 
                 across_known_non_properties = ["workspace"]
 
             else:
                 across_known_properties["id"] = across_document_id
-                across_known_properties["workspace"] = scope.workspace
+                across_known_properties["workspace"] = workspace
 
                 def getter():
-                    return self._document_repository.get(across_document_id, scope.workspace)
+                    return self._document_repository.get(across_document_id, workspace)
 
                 across_known_non_properties = ["parent"]
 
@@ -303,7 +305,7 @@ class DocumentFactory:
             self._link_previews[id_] = link_preview
         return link_preview
 
-    def _get_highlight(self, scope: Document, serialized_id: str, serialized: SerializedHighlight) -> Highlight:
+    def _get_highlight(self, serialized_id: str, serialized: SerializedHighlight, scope: Document) -> Highlight:
         highlight_id = lib.Id(serialized_id)
         highlight_link_preview = self._get_link_preview(
             id_=highlight_id,
@@ -311,7 +313,8 @@ class DocumentFactory:
         )
         lazy_highlight = lib.Lazy(
             getter=lambda: scope.get_highlight(highlight_id),
-            known_properties={"id": highlight_id, "parent": scope, "link_preview": highlight_link_preview}
+            known_properties={"id": highlight_id, "parent": scope, "link_preview": highlight_link_preview},
+            known_non_properties=["workspace"],
         )
         links = [self._get_link(ser_link_id, serialized.links[ser_link_id], lazy_highlight)
                  for ser_link_id in serialized.links]
