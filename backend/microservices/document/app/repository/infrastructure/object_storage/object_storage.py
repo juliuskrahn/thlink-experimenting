@@ -18,6 +18,9 @@ class ObjectStorage:
         except botocore.exceptions.ClientError as e:
             raise
 
+    def get_url(self, id_: str):
+        pass  # TODO
+
     def put(self, id_: str, body):
         try:
             resp = self._client.put_object(

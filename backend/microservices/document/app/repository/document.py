@@ -1,17 +1,23 @@
-from typing import List
-from domain import lib
+from typing import List, Callable
+from functools import cache
 from domain.model.document import Document, Content, Link, Highlight
 
 
 class DocumentRepositoryDocument(Document):
 
-    content_id: lib.Id
-    version: int
-
-    def _repository_init(self: Document, version: int, content_id: lib.Id):
-        self.content_id = content_id
-        self.version = version
+    def _repository_init(self: Document, version: int, content_body_url_getter: Callable):
+        self._version = version
         self._initial_version = version
+        self._content_body_url_getter = content_body_url_getter
+
+    @property
+    def version(self):
+        return self._version
+
+    @property
+    @cache
+    def content_body_url(self):
+        return self._content_body_url_getter()
 
     def update_content(self,
                        content: Content,
@@ -19,5 +25,5 @@ class DocumentRepositoryDocument(Document):
                        highlights: List[Highlight],
                        ):
         super().update_content(content, links, highlights)
-        if self._initial_version == self.version:
-            self.version += 1
+        if self._initial_version == self._version:
+            self._version += 1

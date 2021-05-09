@@ -6,6 +6,7 @@ from app.repository import DocumentRepository
 from app.interface import DocumentIdentifierModel, DocumentModel
 from app.utils import require
 from app.middleware import middleware
+import app.event
 
 
 class Event(DocumentIdentifierModel):
@@ -26,4 +27,6 @@ def handler(event: Event, context: LambdaContext):
         document = require(repository, document_id, workspace)
         document.tag(event.tag)
 
-    return Response.build(document).dict(by_alias=True)
+    response = Response.build(document)
+    app.event.document_mutated(response)
+    return response.dict(by_alias=True)

@@ -6,6 +6,7 @@ from app.implementation import ContentTypePolicy
 from app.interface import PreparedDocumentModel, DocumentModel
 from app.utils import prepare_links
 from app.middleware import middleware, BadOperationUserError
+import app.event
 
 
 class Event(PreparedDocumentModel):
@@ -39,4 +40,6 @@ def handler(event: Event, context: LambdaContext):
 
         repository.add(document)
 
-    return Response.build(document, with_content_body=True).dict(by_alias=True)
+    response = Response.build(document, with_content_body_url=True)
+    app.event.document_created(response)
+    return response.dict(by_alias=True)

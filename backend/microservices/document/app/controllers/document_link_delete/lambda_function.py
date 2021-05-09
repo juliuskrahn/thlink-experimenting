@@ -7,6 +7,7 @@ from app.implementation import LivingContentTypePolicy
 from app.interface import SourceDocumentLinkIdentifierModel, DocumentModel
 from app.utils import require
 from app.middleware import middleware, BadOperationUserError
+import app.event
 
 
 class Event(SourceDocumentLinkIdentifierModel):
@@ -32,4 +33,6 @@ def handler(event: Event, context: LambdaContext):
         if link:
             link.delete()
 
-    return Response.build(document).dict(by_alias=True)
+    response = Response.build(document)
+    app.event.document_mutated(response)
+    return response.dict(by_alias=True)

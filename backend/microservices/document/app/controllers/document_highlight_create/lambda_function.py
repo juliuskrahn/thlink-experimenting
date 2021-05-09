@@ -7,6 +7,7 @@ from app.implementation import LivingContentTypePolicy, THLINK_DOCUMENT
 from app.interface import DocumentIdentifierModel, PreparedHighlightModel, DocumentModel
 from app.utils import require, prepare_links
 from app.middleware import middleware, BadOperationUserError
+import app.event
 
 
 class Event(DocumentIdentifierModel, PreparedHighlightModel):
@@ -33,4 +34,6 @@ def handler(event: Event, context: LambdaContext):
             links = prepare_links(repository, workspace, event.links) if event.links else []
             highlight.make_note(note, links)
 
-    return Response.build(document).dict(by_alias=True)
+    response = Response.build(document)
+    app.event.document_mutated(response)
+    return response.dict(by_alias=True)

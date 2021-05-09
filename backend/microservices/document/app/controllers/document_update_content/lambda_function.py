@@ -8,6 +8,7 @@ from app.implementation import LivingContentTypePolicy
 from app.interface import DocumentIdentifierModel, PreparedLinkModel, DocumentModel
 from app.utils import require, prepare_links
 from app.middleware import middleware, BadOperationUserError
+import app.event
 
 
 class Event(DocumentIdentifierModel):
@@ -35,7 +36,9 @@ def handler(event: Event, context: LambdaContext):
             links = prepare_links(repository, workspace, event.links) if event.links else []
             document.update_content(content, links, highlights=[])
 
-        return Response.build(document, with_content_body=True).dict(by_alias=True)
+        response = Response.build(document, with_content_body_url=True)
+        app.event.document_mutated(response)
+        return response.dict(by_alias=True)
 
     except DocumentContentUpdatedByOtherUserError:
         raise BadOperationUserError("Document content updated by other user")

@@ -72,11 +72,9 @@ class SerializedDocument(BaseModel):
     version: int
     tags: List[str]
     content_type: str
-    content_id: str
     links: Dict[str, SerializedLink]
     backlinks: Dict[str, SerializedBacklink]
     highlights: Dict[str, SerializedHighlight]
-    content_id: str
     version: int
     # no need to store the link preview, because the link preview text is always the document title
 
@@ -89,7 +87,6 @@ class SerializedDocument(BaseModel):
             version=document.version,
             tags=document.tags,
             content_type=document.content.type,
-            content_id=str(document.content_id),
             links={str(link.id): SerializedLink.build(link) for link in document.links},
             backlinks={str(link.id): SerializedBacklink.build(link) for link in document.backlinks},
             highlights={str(highlight.id): SerializedHighlight.build(highlight) for highlight in document.highlights},

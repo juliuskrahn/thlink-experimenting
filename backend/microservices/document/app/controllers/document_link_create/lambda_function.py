@@ -7,6 +7,7 @@ from app.implementation import LivingContentTypePolicy
 from app.interface import DocumentIdentifierModel, PreparedLinkModel, DocumentModel
 from app.utils import require
 from app.middleware import middleware, BadOperationUserError
+import app.event
 
 
 class Event(DocumentIdentifierModel, PreparedLinkModel):
@@ -36,4 +37,6 @@ def handler(event: Event, context: LambdaContext):
             to=require(repository, target_document_id, workspace, target_document_highlight_id),
         )
 
-    return Response.build(document).dict(by_alias=True)
+    response = Response.build(document)
+    app.event.document_mutated(response)
+    return response.dict(by_alias=True)

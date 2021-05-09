@@ -38,9 +38,11 @@ class DocumentRepository(AbstractDocumentRepository):
         db_item = self._db.get_item(db.ItemKey("workspace", workspace, secondary=db.ItemKey("id", document_id)))
         if not db_item:
             return None
+        serialized_document = SerializedDocument(**db_item)
         document = self._document_factory.build_document(
-            SerializedDocument(**db_item),
-            content_body_getter=lambda content_id: self._object_storage.get(content_id),
+            serialized_document,
+            content_body_getter=lambda: self._object_storage.get(serialized_document.id),
+            content_body_url_getter=lambda: self._object_storage.get_url(serialized_document.id),
         )
         self._documents[(document.id, document.workspace)] = document
         self._documents_loaded_serialized[(document.id, document.workspace)] = SerializedDocument(**db_item)
@@ -55,9 +57,11 @@ class DocumentRepository(AbstractDocumentRepository):
             return []
         documents = []
         for db_item in db_items:
+            serialized_document = SerializedDocument(**db_item)
             document = self._document_factory.build_document(
-                SerializedDocument(**db_item),
-                content_body_getter=lambda content_id: lambda: self._object_storage.get(content_id),
+                serialized_document,
+                content_body_getter=lambda: self._object_storage.get(serialized_document.id),
+                content_body_url_getter=lambda: self._object_storage.get_url(serialized_document.id),
             )
             documents.append(document)
             self._documents[(document.id, document.workspace)] = document
@@ -66,7 +70,11 @@ class DocumentRepository(AbstractDocumentRepository):
 
     def add(self, document: Document):
         self._documents[(document.id, document.workspace)] = document
-        DocumentRepositoryDocument._repository_init(document, version=1, content_id=lib.Id())
+        DocumentRepositoryDocument._repository_init(
+            document,
+            version=1,
+            content_body_url_getter=lambda: self._object_storage.get_url(str(document.id)),
+        )
 
     def _save(self):
         for document in set(self._collect_dirty_documents()):  # deduplicate
@@ -151,18 +159,17 @@ class DocumentFactory:
         # bootstrapping loops
         self._document_ids = []
 
-    def build_document(self, serialized: SerializedDocument, content_body_getter: Callable)\
-            -> DocumentRepositoryDocument:
+    def build_document(self, serialized: SerializedDocument,
+                       content_body_getter: Callable, content_body_url_getter: Callable) -> DocumentRepositoryDocument:
         document_id = lib.Id(serialized.id)
         self._document_ids.append(document_id)
         workspace = Workspace(serialized.workspace)
-        content_id = lib.Id(serialized.content_id)
         document_link_preview = self._get_link_preview(
             id_=document_id,
             factory_fn=lambda: LinkPreview(serialized.title, None),
         )
         content = lib.Lazy(lambda: Content(
-            body=content_body_getter(content_id),
+            body=content_body_getter(),
             type=serialized.content_type,
         ), known_properties={"type": serialized.content_type})
 
@@ -193,7 +200,7 @@ class DocumentFactory:
             backlinks=backlinks,
             highlights=highlights,
         )
-        document._repository_init(serialized.version, content_id)
+        document._repository_init(serialized.version, content_body_url_getter)
         self._document_ids.remove(document_id)
         return document
 

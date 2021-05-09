@@ -4,6 +4,9 @@ from app.repository import DocumentRepositoryDocument
 from .base_model import BaseModel
 
 
+# TODO remove redundant attrs ~> None?
+
+
 class PreparedLinkModel(BaseModel):
     location: str
     target_document_id: str
@@ -85,24 +88,28 @@ class PreparedDocumentModel(BaseModel):
     content_type: str
     content_body: Any
     links: List[PreparedLinkModel] = None
-    highlights: List[PreparedHighlightModel] = None
 
 
-class DocumentModel(PreparedDocumentModel):
+class DocumentModel(BaseModel):
     id: str
+    workspace: str
+    title: str
+    tags: List[str]
+    content_type: str
+    content_body_url: str
     links: List[LinkModel]
     backlinks: List[BacklinkModel]
     highlights: List[HighlightModel]
 
     @classmethod
-    def build(cls, document: DocumentRepositoryDocument, with_content_body=False):
+    def build(cls, document: DocumentRepositoryDocument, with_content_body_url=False):
         return cls(
             id=str(document.id),
             workspace=str(document.workspace),
             title=document.title,
             tags=document.tags,
             contentType=document.content.type,
-            contentBody=document.content.body if with_content_body else None,
+            contentBodyUrl=document.content_body_url if with_content_body_url else None,
             links=[LinkModel.build(link) for link in document.links],
             backlinks=[BacklinkModel.build(link) for link in document.backlinks],
             highlights=[HighlightModel.build(highlight) for highlight in document.highlights],

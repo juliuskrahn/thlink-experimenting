@@ -7,6 +7,7 @@ from app.implementation import THLINK_DOCUMENT
 from app.interface import DocumentHighlightIdentifierModel, HighlightMakeNoteModel, DocumentModel
 from app.utils import require, prepare_links
 from app.middleware import middleware
+import app.event
 
 
 class Event(DocumentHighlightIdentifierModel, HighlightMakeNoteModel):
@@ -34,4 +35,6 @@ def handler(event: Event, context: LambdaContext):
         else:
             highlight.delete_note()
 
-    return Response.build(document).dict(by_alias=True)
+    response = Response.build(document)
+    app.event.document_mutated(response)
+    return response.dict(by_alias=True)
