@@ -5,7 +5,7 @@ from domain.model.document import Workspace
 from app.repository import DocumentRepository
 from app.interface import DocumentIdentifierModel
 from app.middleware import middleware
-import app.event
+from app.event import EventManager
 
 
 class Event(DocumentIdentifierModel):
@@ -28,5 +28,5 @@ def handler(event: Event, context: LambdaContext):
             document.delete()
 
     response = Response(documentId=str(document.id), workspace=str(document.workspace))
-    app.event.document_deleted(response)
+    EventManager().document_deleted(response)
     return response.dict(by_alias=True)

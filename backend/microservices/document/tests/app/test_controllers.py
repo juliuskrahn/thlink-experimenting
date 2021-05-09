@@ -1,3 +1,6 @@
+# TODO test events
+
+
 def test_can_create_document(lambda_context, MockedMiddlewareWithoutErrorCatching):
     from app.controllers.document_create.lambda_function import handler
     event = {
@@ -12,8 +15,11 @@ def test_can_create_document(lambda_context, MockedMiddlewareWithoutErrorCatchin
     response = handler(event.copy(), lambda_context)
 
     assert type(response.get("id")) == str
+    assert response.get("contentBodyUrl") == "url"
+    assert response.get("version") == 1
     for attribute in event:
-        assert response[attribute] == event[attribute]
+        if attribute != "contentBody":
+            assert response[attribute] == event[attribute]
 
 
 def test_can_create_document_with_links(lambda_context, controller_other_created_document,
@@ -35,10 +41,9 @@ def test_can_create_document_with_links(lambda_context, controller_other_created
     }
     response = handler(event.copy(), lambda_context)
 
-    assert type(response.get("id")) == str
     assert type(response["links"][0].get("id")) == str
     for attribute in event:
-        if attribute != "links":
+        if attribute != "links" and attribute != "contentBody":
             assert response[attribute] == event[attribute]
     for attribute in event["links"][0]:
         assert response["links"][0][attribute] == event["links"][0][attribute]
@@ -80,10 +85,10 @@ def test_can_get_all_documents_in_workspace(lambda_context,
 
     # response does not contain document content bodies
 
-    controller_created_document["contentBody"] = None
+    controller_created_document["contentBodyUrl"] = None
     assert controller_created_document in response["documents"]
 
-    controller_other_created_document["contentBody"] = None
+    controller_other_created_document["contentBodyUrl"] = None
     assert controller_other_created_document in response["documents"]
 
 
@@ -100,7 +105,7 @@ def test_can_create_document_highlight(lambda_context, MockedMiddlewareWithoutEr
 
     assert type(response["highlights"][0].get("id")) == str
     for attribute in controller_created_document:
-        if attribute != "highlights" and attribute != "contentBody":
+        if attribute != "highlights" and attribute != "contentBodyUrl":
             assert controller_created_document[attribute] == response[attribute]
     assert event["location"] == response["highlights"][0]["location"]
     assert event["linkPreviewText"] == response["highlights"][0]["linkPreviewText"]
@@ -126,7 +131,7 @@ def test_can_create_document_highlight_with_note_and_links(lambda_context, Mocke
     assert type(response["highlights"][0].get("id")) == str
     assert type(response["highlights"][0]["links"][0].get("id")) == str
     for attribute in controller_created_document:
-        if attribute != "highlights" and attribute != "contentBody":
+        if attribute != "highlights" and attribute != "contentBodyUrl":
             assert controller_created_document[attribute] == response[attribute]
     assert event["location"] == response["highlights"][0]["location"]
     assert event["linkPreviewText"] == response["highlights"][0]["linkPreviewText"]
@@ -145,7 +150,7 @@ def test_can_delete_document_highlight(lambda_context, MockedMiddlewareWithoutEr
     }
     response = handler(event.copy(), lambda_context)
 
-    controller_created_document["contentBody"] = None
+    controller_created_document["contentBodyUrl"] = None
     assert controller_created_document == response
 
 
@@ -168,7 +173,7 @@ def test_can_create_document_highlight_note(lambda_context, MockedMiddlewareWith
 
     assert type(response["highlights"][0]["links"][0].get("id")) == str
     for attribute in controller_created_document:
-        if attribute != "highlights" and attribute != "contentBody":
+        if attribute != "highlights" and attribute != "contentBodyUrl":
             assert controller_created_document[attribute] == response[attribute]
     assert event["linkPreviewText"] == response["highlights"][0]["linkPreviewText"]
     assert event["noteBody"] == response["highlights"][0]["noteBody"]
@@ -190,7 +195,7 @@ def test_can_delete_document_highlight_note(lambda_context, MockedMiddlewareWith
     response = handler(event.copy(), lambda_context)
 
     for attribute in controller_created_document:
-        if attribute != "highlights" and attribute != "contentBody":
+        if attribute != "highlights" and attribute != "contentBodyUrl":
             assert controller_created_document[attribute] == response[attribute]
     assert not response["highlights"][0].get("noteBody")
     assert not response["highlights"][0].get("links")
@@ -209,7 +214,7 @@ def test_can_create_document_link(lambda_context, MockedMiddlewareWithoutErrorCa
 
     assert type(response["links"][0].get("id")) == str
     for attribute in controller_created_document:
-        if attribute != "links" and attribute != "contentBody":
+        if attribute != "links" and attribute != "contentBodyUrl":
             assert controller_created_document[attribute] == response[attribute]
     assert event["targetDocumentId"] == response["links"][0]["targetDocumentId"]
     assert event["location"] == response["links"][0]["location"]
@@ -238,7 +243,7 @@ def test_can_delete_document_link(lambda_context, MockedMiddlewareWithoutErrorCa
     }
     response = handler(event.copy(), lambda_context)
 
-    controller_created_document["contentBody"] = None
+    controller_created_document["contentBodyUrl"] = None
     assert controller_created_document == response
 
 
@@ -254,7 +259,7 @@ def test_can_rename_document(lambda_context, MockedMiddlewareWithoutErrorCatchin
     }
     response = handler(event.copy(), lambda_context)
 
-    controller_created_document["contentBody"] = None
+    controller_created_document["contentBodyUrl"] = None
     controller_created_document["title"] = event["title"]
     assert controller_created_document == response
 
@@ -268,7 +273,7 @@ def test_can_add_tag_to_document(lambda_context, MockedMiddlewareWithoutErrorCat
     }
     response = handler(event.copy(), lambda_context)
 
-    controller_created_document["contentBody"] = None
+    controller_created_document["contentBodyUrl"] = None
     controller_created_document["tags"].append(event["tag"])
     assert controller_created_document == response
 
@@ -286,22 +291,22 @@ def test_can_remove_tag_from_document(lambda_context, MockedMiddlewareWithoutErr
     from app.controllers.document_tag_remove.lambda_function import handler
     response = handler(event.copy(), lambda_context)
 
-    controller_created_document["contentBody"] = None
+    controller_created_document["contentBodyUrl"] = None
     assert response == controller_created_document
 
 
 def test_can_update_document_content(lambda_context, MockedMiddlewareWithoutErrorCatching,
-                                     controller_created_document_living_content):
+                                     controller_created_document_with_living_content):
     from app.controllers.document_update_content.lambda_function import handler
     event = {
-        "documentId": controller_created_document_living_content["id"],
+        "documentId": controller_created_document_with_living_content["id"],
         "workspace": "MyWorkspace",
         "contentBody": "Lorem novum ipsum",
     }
     response = handler(event.copy(), lambda_context)
 
-    controller_created_document_living_content["contentBody"] = event["contentBody"]
-    assert response == controller_created_document_living_content
+    controller_created_document_with_living_content["version"] += 1
+    assert response == controller_created_document_with_living_content
 
 
 # TODO update content + links

@@ -4,7 +4,7 @@ from domain import lib
 from domain.model.document import Workspace
 from app.repository import DocumentRepository
 from app.interface import DocumentIdentifierModel, DocumentModel
-from app.utils import require
+from app.chef import DocumentChef
 from app.middleware import middleware
 
 
@@ -23,6 +23,6 @@ def handler(event: Event, context: LambdaContext):
     workspace = Workspace(event.workspace)
 
     with DocumentRepository.use() as repository:
-        document = require(repository, document_id, workspace)
+        document = DocumentChef(repository).order(document_id, workspace)
 
     return Response.build(document, with_content_body_url=True).dict(by_alias=True)

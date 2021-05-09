@@ -5,9 +5,9 @@ from domain.model.document import Workspace, Content
 from app.repository import DocumentRepository
 from app.implementation import THLINK_DOCUMENT
 from app.interface import DocumentHighlightIdentifierModel, HighlightMakeNoteModel, DocumentModel
-from app.utils import require, prepare_links
+from app.chef import DocumentChef
 from app.middleware import middleware
-import app.event
+from app.event import EventManager
 
 
 class Event(DocumentHighlightIdentifierModel, HighlightMakeNoteModel):
@@ -26,15 +26,15 @@ def handler(event: Event, context: LambdaContext):
     document_highlight_id = lib.Id(event.document_highlight_id)
 
     with DocumentRepository.use() as repository:
-        document = repository.get(document_id, workspace)
-        highlight = require(repository, document_id, workspace, document_highlight_id)
+        chef = DocumentChef(repository)
+        highlight = chef.order(document_id, workspace, document_highlight_id)
         if event.note_body:
             note = Content(event.note_body, THLINK_DOCUMENT)
-            links = prepare_links(repository, workspace, event.links) if event.links else []
+            links = chef.prepare_links(workspace, event.links) if event.links else []
             highlight.make_note(note, links)
         else:
             highlight.delete_note()
 
-    response = Response.build(document)
-    app.event.document_mutated(response)
+    response = Response.build(highlight.parent)
+    EventManager().document_mutated(response)
     return response.dict(by_alias=True)

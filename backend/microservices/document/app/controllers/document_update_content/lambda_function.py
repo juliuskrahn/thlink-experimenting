@@ -6,9 +6,9 @@ from domain.model.document import Workspace, Content
 from app.repository import DocumentRepository, DocumentContentUpdatedByOtherUserError
 from app.implementation import LivingContentTypePolicy
 from app.interface import DocumentIdentifierModel, PreparedLinkModel, DocumentModel
-from app.utils import require, prepare_links
+from app.chef import DocumentChef
 from app.middleware import middleware, BadOperationUserError
-import app.event
+from app.event import EventManager
 
 
 class Event(DocumentIdentifierModel):
@@ -29,15 +29,16 @@ def handler(event: Event, context: LambdaContext):
     try:
 
         with DocumentRepository.use() as repository:
-            document = require(repository, document_id, workspace)
+            chef = DocumentChef(repository)
+            document = chef.order(document_id, workspace)
             if not LivingContentTypePolicy.is_satisfied_by(document.content.type):
                 raise BadOperationUserError(f"Document content type must be in {LivingContentTypePolicy.types}")
             content = Content(event.content_body, document.content.type)
-            links = prepare_links(repository, workspace, event.links) if event.links else []
+            links = chef.prepare_links(workspace, event.links) if event.links else []
             document.update_content(content, links, highlights=[])
 
         response = Response.build(document, with_content_body_url=True)
-        app.event.document_mutated(response)
+        EventManager().document_mutated(response)
         return response.dict(by_alias=True)
 
     except DocumentContentUpdatedByOtherUserError:

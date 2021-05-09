@@ -1,23 +1,26 @@
 from app.interface import DocumentModel
 from domain.model.document import Link
+from app.repository import DocumentRepositoryDocument
 
 
 def test_document_model(document, other_document, content_location, content):
+    DocumentRepositoryDocument._repository_init(document, version=1, content_body_url_getter=lambda: "url")
     backlink = other_document.link(content_location, document)
     link = document.link(content_location, other_document)
     highlight = document.highlight(content_location, link_preview_text=content.body)
     highlight_link = Link.prepare(content_location, other_document)
     highlight_backlink = other_document.link(content_location, highlight)
     highlight.make_note(content, links=[highlight_link])
-    build_dict = DocumentModel.build(document, with_content_body=True).dict(by_alias=True)
+    build_dict = DocumentModel.build(document, with_content_body_url=True).dict(by_alias=True)
 
     assert build_dict == {
         "id": str(document.id),
         "title": document.title,
         "workspace": str(document.workspace),
         "tags": document.tags,
-        "contentBody": document.content.body,
         "contentType": document.content.type,
+        "contentBodyUrl": "url",
+        "version": 1,
         "links": [{
             "id": str(link.id),
             "location": str(link.location),

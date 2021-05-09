@@ -2,8 +2,10 @@ import pytest
 from dataclasses import dataclass
 from aws_lambda_powertools.middleware_factory import lambda_handler_decorator
 from app.repository.infrastructure import db, object_storage
-from tests.app.repository_infrastructure_mocks.db import DocumentRepositoryDB
-from tests.app.repository_infrastructure_mocks.object_storage import DocumentRepositoryObjectStorage
+from tests.app.mocks.repository_infrastructure.db import DocumentRepositoryDB
+from tests.app.mocks.repository_infrastructure.object_storage import DocumentRepositoryObjectStorage
+import app.event
+from tests.app.mocks.event import EventManager
 from domain.model.document import Document, Content, ContentLocation, Workspace
 from app import middleware
 
@@ -24,6 +26,7 @@ def MockedDBForDocumentRepository(monkeypatch):
 def MockedObjectStorageForDocumentRepository(monkeypatch):
     DocumentRepositoryObjectStorage._storage = {}
     DocumentRepositoryObjectStorage.count_get_operations = 0
+    DocumentRepositoryObjectStorage.count_get_url_operations = 0
     DocumentRepositoryObjectStorage.count_put_operations = 0
     DocumentRepositoryObjectStorage.count_delete_operations = 0
     monkeypatch.setattr(object_storage, "DocumentRepositoryObjectStorage", DocumentRepositoryObjectStorage)
@@ -37,6 +40,11 @@ def MockedMiddlewareWithoutErrorCatching(monkeypatch):
         response = handler(event, context)
         return response
     monkeypatch.setattr(middleware, "middleware", middleware_without_error_catching)
+
+
+@pytest.fixture(autouse=True)
+def MockedEvent(monkeypatch):
+    monkeypatch.setattr(app.event, "EventManager", EventManager)
 
 
 @pytest.fixture
@@ -132,7 +140,7 @@ def controller_created_document_highlight_id(lambda_context, controller_created_
 
 
 @pytest.fixture
-def controller_created_document_living_content(lambda_context):
+def controller_created_document_with_living_content(lambda_context):
     from app.controllers.document_create.lambda_function import handler
     event = {
         "workspace": "MyWorkspace",

@@ -96,7 +96,8 @@ class DocumentModel(BaseModel):
     title: str
     tags: List[str]
     content_type: str
-    content_body_url: str
+    content_body_url: str = None
+    version: int
     links: List[LinkModel]
     backlinks: List[BacklinkModel]
     highlights: List[HighlightModel]
@@ -109,7 +110,8 @@ class DocumentModel(BaseModel):
             title=document.title,
             tags=document.tags,
             contentType=document.content.type,
-            contentBodyUrl=document.content_body_url if with_content_body_url else None,
+            contentBodyUrl=document.get_content_body_url() if with_content_body_url else None,
+            version=document.version,
             links=[LinkModel.build(link) for link in document.links],
             backlinks=[BacklinkModel.build(link) for link in document.backlinks],
             highlights=[HighlightModel.build(highlight) for highlight in document.highlights],

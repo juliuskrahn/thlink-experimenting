@@ -85,7 +85,7 @@ class DocumentRepository(AbstractDocumentRepository):
         if document.deleted:
             if document_loaded:
                 self._db.delete(db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)))
-                self._object_storage.delete(document.content_id.value)
+                self._object_storage.delete(str(document.id))
         elif document_loaded and document.version == document_loaded.version:
             self._db.update(
                 key=db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)),
@@ -101,7 +101,7 @@ class DocumentRepository(AbstractDocumentRepository):
                 )
             except db.ExpectationNotMet:
                 raise DocumentContentUpdatedByOtherUserError
-            self._object_storage.put(document.content_id.value, document.content.body)
+            self._object_storage.put(str(document.id), document.content.body)
             # TODO Saga Pattern
 
     def _document_is_dirty(self, document: DocumentRepositoryDocument):

@@ -13,11 +13,11 @@ def test_save_and_retrieve_document_with_content(document,
     with DocumentRepository.use() as repository:
         retrieved_document = repository.get(document.id, document.workspace)
 
-    assert interface.DocumentModel.build(document=document, with_content_body=True) \
-           == interface.DocumentModel.build(document=retrieved_document, with_content_body=True)
+    assert interface.DocumentModel.build(document=document, with_content_body_url=True) \
+           == interface.DocumentModel.build(document=retrieved_document, with_content_body_url=True)
 
     MockedDBForDocumentRepository.test_operations_count(put=1, get=1)
-    MockedObjectStorageForDocumentRepository.test_operations_count(put=1, get=1)
+    MockedObjectStorageForDocumentRepository.test_operations_count(put=1, get_url=2)
 
 
 def test_save_and_retrieve_all_documents_in_workspace(document, other_document, document_from_other_workspace,

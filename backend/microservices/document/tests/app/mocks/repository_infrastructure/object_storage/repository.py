@@ -11,6 +11,12 @@ class DocumentRepositoryObjectStorage:
         DocumentRepositoryObjectStorage.count_get_operations += 1
         return DocumentRepositoryObjectStorage._storage.get(id_)
 
+    count_get_url_operations: int
+
+    def get_url(self, id_: str):
+        DocumentRepositoryObjectStorage.count_get_url_operations += 1
+        return "url"  # important, tests depends on this!
+
     count_put_operations: int
 
     def put(self, id_: str, body):
@@ -25,7 +31,8 @@ class DocumentRepositoryObjectStorage:
             del DocumentRepositoryObjectStorage._storage[id_]
 
     @staticmethod
-    def test_operations_count(get=0, put=0, delete=0):
+    def test_operations_count(get=0, get_url=0, put=0, delete=0):
         assert DocumentRepositoryObjectStorage.count_get_operations == get
+        assert DocumentRepositoryObjectStorage.count_get_url_operations == get_url
         assert DocumentRepositoryObjectStorage.count_put_operations == put
         assert DocumentRepositoryObjectStorage.count_delete_operations == delete
