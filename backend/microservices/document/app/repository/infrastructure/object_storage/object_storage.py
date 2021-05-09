@@ -19,7 +19,15 @@ class ObjectStorage:
             raise
 
     def get_url(self, id_: str):
-        pass  # TODO
+        try:
+            resp = self._client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": self._bucket, "Key": id_},
+                ExpiresIn=60*60*24,
+            )
+            return resp
+        except botocore.exceptions.ClientError as e:
+            raise
 
     def put(self, id_: str, body):
         try:
