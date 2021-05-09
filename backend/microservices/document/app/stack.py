@@ -22,7 +22,6 @@ class Stack(core.Stack):
             topic_name="DocumentEvent",
             display_name="Document Event Topic",
             fifo=True,
-            content_based_deduplication=True,
         )
 
         document_dynamodb_table = dynamodb.Table(

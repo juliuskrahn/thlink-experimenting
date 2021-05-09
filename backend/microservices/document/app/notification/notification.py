@@ -1,6 +1,7 @@
 import os
-import botocore.exceptions
+from uuid import uuid4
 import boto3
+import botocore.exceptions
 from app.interface import DocumentModel, DocumentIdentifierModel
 
 
@@ -15,6 +16,7 @@ class NotificationManager:
         try:
             response = self._document_event_sns_topic.publish(
                 Message=event_message_json_str,
+                MessageDeduplicationId=uuid4().hex,
                 MessageGroupId=group_id,
                 MessageAttributes={"eventType": event_type},
             )
