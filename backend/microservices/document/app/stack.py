@@ -1,6 +1,7 @@
 from typing import List
 import os
 import shutil
+import subprocess
 from aws_cdk import core
 import aws_cdk.aws_lambda as lambda_
 import aws_cdk.aws_dynamodb as dynamodb
@@ -187,12 +188,14 @@ def build():
     os.mkdir("_build")
 
     # app layer
-    os.mkdir("_build/app_layer")
-    shutil.copytree("../app", "_build/app_layer", ignore=lambda src, names: ["controllers", "stack.py", "README.md"])
-    shutil.copytree("../domain", "_build/app_layer")
+    os.makedirs("_build/app_layer/python")
+    shutil.copytree("../app", "_build/app_layer/python",
+                    ignore=lambda src, names: ["controllers", "stack.py", "README.md"])
+    shutil.copytree("../domain", "_build/app_layer/python")
 
     # aws lambda powertools layer
-    # TODO
+    os.makedirs("_build/lambda_powertools_layer/python")
+    subprocess.run(["pip", "install", "aws_lambda_powertools", "-t", "_build/lambda_powertools_layer/python"])
 
 
 def to_camel_case(string: str):
