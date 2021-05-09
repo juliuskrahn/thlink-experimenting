@@ -6,7 +6,7 @@ from app.repository import DocumentRepository
 from app.interface import DocumentHighlightIdentifierModel, DocumentModel
 from app.chef import DocumentChef
 from app.middleware import middleware
-from app.event import EventManager
+from app.notification import NotificationManager
 
 
 class Event(DocumentHighlightIdentifierModel):
@@ -31,5 +31,5 @@ def handler(event: Event, context: LambdaContext):
             highlight.delete()
 
     response = Response.build(document)
-    EventManager().document_mutated(response)
-    return response.dict(by_alias=True)
+    NotificationManager().document_mutated(response)
+    return response.dict()

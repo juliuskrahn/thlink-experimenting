@@ -7,7 +7,7 @@ from app.implementation import LivingContentTypePolicy
 from app.interface import DocumentIdentifierModel, PreparedLinkModel, DocumentModel
 from app.chef import DocumentChef
 from app.middleware import middleware, BadOperationUserError
-from app.event import EventManager
+from app.notification import NotificationManager
 
 
 class Event(DocumentIdentifierModel, PreparedLinkModel):
@@ -39,5 +39,5 @@ def handler(event: Event, context: LambdaContext):
         )
 
     response = Response.build(document)
-    EventManager().document_mutated(response)
-    return response.dict(by_alias=True)
+    NotificationManager().document_mutated(response)
+    return response.dict()

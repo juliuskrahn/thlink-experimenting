@@ -6,7 +6,7 @@ from app.implementation import ContentTypePolicy
 from app.interface import PreparedDocumentModel, DocumentModel
 from app.chef import DocumentChef
 from app.middleware import middleware, BadOperationUserError
-from app.event import EventManager
+from app.notification import NotificationManager
 
 
 class Event(PreparedDocumentModel):
@@ -41,5 +41,5 @@ def handler(event: Event, context: LambdaContext):
         repository.add(document)
 
     response = Response.build(document, with_content_body_url=True)
-    EventManager().document_created(response)
-    return response.dict(by_alias=True)
+    NotificationManager().document_created(response)
+    return response.dict()

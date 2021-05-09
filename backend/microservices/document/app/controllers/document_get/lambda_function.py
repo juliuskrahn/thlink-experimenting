@@ -25,4 +25,4 @@ def handler(event: Event, context: LambdaContext):
     with DocumentRepository.use() as repository:
         document = DocumentChef(repository).order(document_id, workspace)
 
-    return Response.build(document, with_content_body_url=True).dict(by_alias=True)
+    return Response.build(document, with_content_body_url=True).dict()

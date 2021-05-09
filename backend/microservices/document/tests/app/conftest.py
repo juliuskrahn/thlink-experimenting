@@ -4,7 +4,7 @@ from aws_lambda_powertools.middleware_factory import lambda_handler_decorator
 from app.repository.infrastructure import db, object_storage
 from tests.app.mocks.repository_infrastructure.db import DocumentRepositoryDB
 from tests.app.mocks.repository_infrastructure.object_storage import DocumentRepositoryObjectStorage
-import app.event
+import app.notification
 from tests.app.mocks.event import EventManager
 from domain.model.document import Document, Content, ContentLocation, Workspace
 from app import middleware
@@ -44,7 +44,7 @@ def MockedMiddlewareWithoutErrorCatching(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def MockedEvent(monkeypatch):
-    monkeypatch.setattr(app.event, "EventManager", EventManager)
+    monkeypatch.setattr(app.notification, "NotificationManager", EventManager)
 
 
 @pytest.fixture

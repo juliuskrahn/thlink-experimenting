@@ -1,5 +1,5 @@
-Document Service
-================
+Document Service (Public Api)
+=============================
 
 .. toctree::
    :maxdepth: 1

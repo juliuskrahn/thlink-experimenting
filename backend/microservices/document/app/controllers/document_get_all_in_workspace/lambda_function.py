@@ -23,4 +23,4 @@ def handler(event: Event, context: LambdaContext):
     with DocumentRepository.use() as repository:
         documents = repository.get_all_in_workspace(workspace)
 
-    return Response(documents=[DocumentModel.build(document) for document in documents]).dict(by_alias=True)
+    return Response(documents=[DocumentModel.build(document) for document in documents]).dict()

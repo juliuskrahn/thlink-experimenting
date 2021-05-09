@@ -7,7 +7,7 @@ from app.implementation import LivingContentTypePolicy, THLINK_DOCUMENT
 from app.interface import DocumentIdentifierModel, PreparedHighlightModel, DocumentModel
 from app.chef import DocumentChef
 from app.middleware import middleware, BadOperationUserError
-from app.event import EventManager
+from app.notification import NotificationManager
 
 
 class Event(DocumentIdentifierModel, PreparedHighlightModel):
@@ -36,5 +36,5 @@ def handler(event: Event, context: LambdaContext):
             highlight.make_note(note, links)
 
     response = Response.build(document)
-    EventManager().document_mutated(response)
-    return response.dict(by_alias=True)
+    NotificationManager().document_mutated(response)
+    return response.dict()

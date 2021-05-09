@@ -4,7 +4,7 @@ from domain.model.document import Link, Highlight
 from .document import DocumentRepositoryDocument
 
 
-class SerializedLink(BaseModel):
+class SerializedLinkModel(BaseModel):
     # key -> id: str
     location: str
     target_document_id: str
@@ -25,7 +25,7 @@ class SerializedLink(BaseModel):
         )
 
 
-class SerializedBacklink(BaseModel):
+class SerializedBacklinkModel(BaseModel):
     # key -> id: str
     location: str
     source_document_id: str
@@ -46,13 +46,13 @@ class SerializedBacklink(BaseModel):
         )
 
 
-class SerializedHighlight(BaseModel):
+class SerializedHighlightModel(BaseModel):
     # key -> id: str
     location: str
     note_body: str = None
     link_preview_text: str
-    links: Dict[str, SerializedLink] = None
-    backlinks: Dict[str, SerializedBacklink]
+    links: Dict[str, SerializedLinkModel] = None
+    backlinks: Dict[str, SerializedBacklinkModel]
 
     @classmethod
     def build(cls, highlight: Highlight):
@@ -60,21 +60,21 @@ class SerializedHighlight(BaseModel):
             location=str(highlight.location),
             note_body=highlight.note.body if highlight.note else None,
             link_preview_text=highlight.link_preview.text,
-            links={str(link.id): SerializedLink.build(link) for link in highlight.links} if highlight.links else None,
-            backlinks={str(link.id): SerializedBacklink.build(link) for link in highlight.backlinks},
+            links={str(link.id): SerializedLinkModel.build(link) for link in highlight.links} if highlight.links else None,
+            backlinks={str(link.id): SerializedBacklinkModel.build(link) for link in highlight.backlinks},
         )
 
 
-class SerializedDocument(BaseModel):
+class SerializedDocumentModel(BaseModel):
     id: str
     workspace: str
     title: str
     version: int
     tags: List[str]
     content_type: str
-    links: Dict[str, SerializedLink]
-    backlinks: Dict[str, SerializedBacklink]
-    highlights: Dict[str, SerializedHighlight]
+    links: Dict[str, SerializedLinkModel]
+    backlinks: Dict[str, SerializedBacklinkModel]
+    highlights: Dict[str, SerializedHighlightModel]
     version: int
     # no need to store the link preview, because the link preview text is always the document title
 
@@ -87,14 +87,14 @@ class SerializedDocument(BaseModel):
             version=document.version,
             tags=document.tags,
             content_type=document.content.type,
-            links={str(link.id): SerializedLink.build(link) for link in document.links},
-            backlinks={str(link.id): SerializedBacklink.build(link) for link in document.backlinks},
-            highlights={str(highlight.id): SerializedHighlight.build(highlight) for highlight in document.highlights},
+            links={str(link.id): SerializedLinkModel.build(link) for link in document.links},
+            backlinks={str(link.id): SerializedBacklinkModel.build(link) for link in document.backlinks},
+            highlights={str(highlight.id): SerializedHighlightModel.build(highlight) for highlight in document.highlights},
         )
 
 
 class DocumentSerializer:
 
     @staticmethod
-    def serialize_document(document: DocumentRepositoryDocument) -> SerializedDocument:
-        return SerializedDocument.build(document)
+    def serialize_document(document: DocumentRepositoryDocument) -> SerializedDocumentModel:
+        return SerializedDocumentModel.build(document)

@@ -6,7 +6,7 @@ from app.repository import DocumentRepository
 from app.interface import DocumentIdentifierModel, DocumentModel
 from app.chef import DocumentChef
 from app.middleware import middleware
-from app.event import EventManager
+from app.notification import NotificationManager
 
 
 class Event(DocumentIdentifierModel):
@@ -28,5 +28,5 @@ def handler(event: Event, context: LambdaContext):
         document.title = event.title
 
     response = Response.build(document)
-    EventManager().document_mutated(response)
-    return response.dict(by_alias=True)
+    NotificationManager().document_mutated(response)
+    return response.dict()

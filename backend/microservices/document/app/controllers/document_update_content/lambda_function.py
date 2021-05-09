@@ -8,7 +8,7 @@ from app.implementation import LivingContentTypePolicy
 from app.interface import DocumentIdentifierModel, PreparedLinkModel, DocumentModel
 from app.chef import DocumentChef
 from app.middleware import middleware, BadOperationUserError
-from app.event import EventManager
+from app.notification import NotificationManager
 
 
 class Event(DocumentIdentifierModel):
@@ -38,8 +38,8 @@ def handler(event: Event, context: LambdaContext):
             document.update_content(content, links, highlights=[])
 
         response = Response.build(document, with_content_body_url=True)
-        EventManager().document_mutated(response)
-        return response.dict(by_alias=True)
+        NotificationManager().document_mutated(response)
+        return response.dict()
 
     except DocumentContentUpdatedByOtherUserError:
         raise BadOperationUserError("Document content updated by other user")

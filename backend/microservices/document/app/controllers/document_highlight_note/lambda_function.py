@@ -7,7 +7,7 @@ from app.implementation import THLINK_DOCUMENT
 from app.interface import DocumentHighlightIdentifierModel, HighlightMakeNoteModel, DocumentModel
 from app.chef import DocumentChef
 from app.middleware import middleware
-from app.event import EventManager
+from app.notification import NotificationManager
 
 
 class Event(DocumentHighlightIdentifierModel, HighlightMakeNoteModel):
@@ -36,5 +36,5 @@ def handler(event: Event, context: LambdaContext):
             highlight.delete_note()
 
     response = Response.build(highlight.parent)
-    EventManager().document_mutated(response)
-    return response.dict(by_alias=True)
+    NotificationManager().document_mutated(response)
+    return response.dict()

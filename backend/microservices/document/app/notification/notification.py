@@ -4,7 +4,7 @@ import boto3
 from app.interface import DocumentModel, DocumentIdentifierModel
 
 
-class EventManager:
+class NotificationManager:
 
     def __init__(self):
         sns = boto3.resource("sns")
@@ -21,14 +21,15 @@ class EventManager:
         except botocore.exceptions.ClientError as e:
             raise InternalError() from e
 
-    def document_created(self, document: DocumentModel):
-        self._publish("documentCreated", document.json(by_alias=True), group_id=document.id)
+    def document_created(self, document_model: DocumentModel):
+        self._publish("documentCreated", document_model.json(), group_id=document_model.id)
 
-    def document_mutated(self, document: DocumentModel):
-        self._publish("documentMutated", document.json(by_alias=True), group_id=document.id)
+    def document_mutated(self, document_model: DocumentModel):
+        self._publish("documentMutated", document_model.json(), group_id=document_model.id)
 
-    def document_deleted(self, identifier: DocumentIdentifierModel):
-        self._publish("documentDeleted", identifier.json(by_alias=True), group_id=identifier.document_id)
+    def document_deleted(self, document_identifier_model: DocumentIdentifierModel):
+        self._publish("documentDeleted", document_identifier_model.json(),
+                      group_id=document_identifier_model.document_id)
 
 
 class InternalError(Exception):

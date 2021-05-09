@@ -7,8 +7,8 @@ from domain.model.document import Document, Workspace, Link, Highlight, Content,
 from domain.model.document import DocumentRepository as AbstractDocumentRepository
 from .infrastructure import db, object_storage
 from .document import DocumentRepositoryDocument
-from .document_serialization import SerializedDocument, SerializedLink, SerializedBacklink, SerializedHighlight,\
-    DocumentSerializer
+from .document_serialization import SerializedDocumentModel, SerializedLinkModel, SerializedBacklinkModel,\
+    SerializedHighlightModel, DocumentSerializer
 from app.implementation import THLINK_DOCUMENT
 
 
@@ -16,7 +16,7 @@ class DocumentRepository(AbstractDocumentRepository):
 
     def __init__(self):
         self._documents: Dict[Tuple[lib.Id, Workspace], DocumentRepositoryDocument] = {}
-        self._documents_loaded_serialized: Dict[Tuple[lib.Id, Workspace], SerializedDocument] = {}
+        self._documents_loaded_serialized: Dict[Tuple[lib.Id, Workspace], SerializedDocumentModel] = {}
         self._db = db.DocumentRepositoryDB()
         self._object_storage = object_storage.DocumentRepositoryObjectStorage()
         self._document_factory = DocumentFactory(self)
@@ -38,14 +38,14 @@ class DocumentRepository(AbstractDocumentRepository):
         db_item = self._db.get_item(db.ItemKey("workspace", workspace, secondary=db.ItemKey("id", document_id)))
         if not db_item:
             return None
-        serialized_document = SerializedDocument(**db_item)
+        serialized_document = SerializedDocumentModel(**db_item)
         document = self._document_factory.build_document(
             serialized_document,
             content_body_getter=lambda: self._object_storage.get(serialized_document.id),
             content_body_url_getter=lambda: self._object_storage.get_url(serialized_document.id),
         )
         self._documents[(document.id, document.workspace)] = document
-        self._documents_loaded_serialized[(document.id, document.workspace)] = SerializedDocument(**db_item)
+        self._documents_loaded_serialized[(document.id, document.workspace)] = SerializedDocumentModel(**db_item)
         return document
 
     def get_all_in_workspace(self, workspace: Workspace) -> List[DocumentRepositoryDocument]:
@@ -57,7 +57,7 @@ class DocumentRepository(AbstractDocumentRepository):
             return []
         documents = []
         for db_item in db_items:
-            serialized_document = SerializedDocument(**db_item)
+            serialized_document = SerializedDocumentModel(**db_item)
             document = self._document_factory.build_document(
                 serialized_document,
                 content_body_getter=lambda: self._object_storage.get(serialized_document.id),
@@ -65,7 +65,7 @@ class DocumentRepository(AbstractDocumentRepository):
             )
             documents.append(document)
             self._documents[(document.id, document.workspace)] = document
-            self._documents_loaded_serialized[(document.id, document.workspace)] = SerializedDocument(**db_item)
+            self._documents_loaded_serialized[(document.id, document.workspace)] = SerializedDocumentModel(**db_item)
         return documents
 
     def add(self, document: Document):
@@ -159,7 +159,7 @@ class DocumentFactory:
         # bootstrapping loops
         self._document_ids = []
 
-    def build_document(self, serialized: SerializedDocument,
+    def build_document(self, serialized: SerializedDocumentModel,
                        content_body_getter: Callable, content_body_url_getter: Callable) -> DocumentRepositoryDocument:
         document_id = lib.Id(serialized.id)
         self._document_ids.append(document_id)
@@ -206,7 +206,7 @@ class DocumentFactory:
 
     def _get_link(self,
                   serialized_id: str,
-                  serialized: Union[SerializedLink, SerializedBacklink],
+                  serialized: Union[SerializedLinkModel, SerializedBacklinkModel],
                   scope: Union[Document, Highlight],
                   ):
         # scope entry -> entry of the document (/highlight) to build
@@ -219,7 +219,7 @@ class DocumentFactory:
 
         workspace = scope.workspace if hasattr(scope, "workspace") else scope.parent.workspace
 
-        across_is_target = as_link = isinstance(serialized, SerializedLink)
+        across_is_target = as_link = isinstance(serialized, SerializedLinkModel)
 
         def get_across() -> Union[Document, Highlight]:
             if across_is_target:
@@ -312,7 +312,7 @@ class DocumentFactory:
             self._link_previews[id_] = link_preview
         return link_preview
 
-    def _get_highlight(self, serialized_id: str, serialized: SerializedHighlight, scope: Document) -> Highlight:
+    def _get_highlight(self, serialized_id: str, serialized: SerializedHighlightModel, scope: Document) -> Highlight:
         highlight_id = lib.Id(serialized_id)
         highlight_link_preview = self._get_link_preview(
             id_=highlight_id,
