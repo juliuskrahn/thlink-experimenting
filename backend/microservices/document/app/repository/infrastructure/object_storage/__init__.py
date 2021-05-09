@@ -1,2 +1,2 @@
-from .object_storage import ObjectStorage
+from .object_storage import ObjectStorage, InternalError
 from .repository import DocumentRepositoryObjectStorage

@@ -29,13 +29,13 @@ class DB:
     def query_items(self, key: ItemKey):
         # query primary key
         try:
-            resp = self._table.query(
+            response = self._table.query(
                 IndexName=key.name,
                 KeyConditionExpression=key.as_dynamodb_primary_key_cond_expression(),
             )
-            return resp["Items"]
+            return response["Items"]
         except botocore.exceptions.ClientError as e:
-            raise
+            raise InternalError() from e
 
     def get_item(self, key: ItemKey):
         try:
@@ -60,8 +60,8 @@ class DB:
             self._table.put_item(Item=item, ConditionExpression=condition_expression)
         except botocore.exceptions.ClientError as e:
             if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                raise ExpectationNotMet from e
-            raise
+                raise ExpectationNotMet() from e
+            raise InternalError() from e
 
     def update(self, key: ItemKey, item: typing.Dict, old_item: typing.Dict):
         assert key.name in item
@@ -103,14 +103,18 @@ class DB:
                 ConditionExpression=f"attribute_exists({key.name})",
             )
         except botocore.exceptions.ClientError as e:
-            raise
+            raise InternalError() from e
 
     def delete(self, key: ItemKey):
         try:
             self._table.delete_item(Key=key.as_dynamodb_key())
         except botocore.exceptions.ClientError as e:
-            raise
+            raise InternalError() from e
 
 
 class ExpectationNotMet(ValueError):
+    pass
+
+
+class InternalError(Exception):
     pass

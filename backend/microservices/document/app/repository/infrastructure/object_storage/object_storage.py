@@ -10,37 +10,41 @@ class ObjectStorage:
 
     def get(self, id_: str):
         try:
-            resp = self._client.get_object(
+            response = self._client.get_object(
                 Bucket=self._bucket,
                 Key=id_,
             )
-            return resp["Body"]
+            return response["Body"]
         except botocore.exceptions.ClientError as e:
-            raise
+            raise InternalError() from e
 
     def get_url(self, id_: str):
         try:
-            resp = self._client.generate_presigned_url(
+            response = self._client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": self._bucket, "Key": id_},
                 ExpiresIn=60*60*24,
             )
-            return resp
+            return response
         except botocore.exceptions.ClientError as e:
-            raise
+            raise InternalError() from e
 
     def put(self, id_: str, body):
         try:
-            resp = self._client.put_object(
+            response = self._client.put_object(
                 Bucket=self._bucket,
                 Key=id_,
                 Body=body,
             )
         except botocore.exceptions.ClientError as e:
-            raise
+            raise InternalError() from e
 
     def delete(self, id_: str):
         try:
-            resp = self._client.delete_object(Bucket=self._bucket, Key=id_)
+            response = self._client.delete_object(Bucket=self._bucket, Key=id_)
         except botocore.exceptions.ClientError as e:
-            raise
+            raise InternalError() from e
+
+
+class InternalError(Exception):
+    pass
