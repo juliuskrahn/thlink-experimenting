@@ -23,11 +23,8 @@ class NotificationManager:
         except botocore.exceptions.ClientError as e:
             raise InternalError() from e
 
-    def document_created(self, document_model: DocumentModel):
-        self._publish("documentCreated", document_model.json(), group_id=document_model.id)
-
-    def document_mutated(self, document_model: DocumentModel):
-        self._publish("documentMutated", document_model.json(), group_id=document_model.id)
+    def document_saved(self, document_model: DocumentModel):
+        self._publish("documentSaved", document_model.json(), group_id=document_model.id)
 
     def document_deleted(self, document_identifier_model: DocumentIdentifierModel):
         self._publish("documentDeleted", document_identifier_model.json(),

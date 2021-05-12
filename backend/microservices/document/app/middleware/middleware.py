@@ -14,9 +14,9 @@ def error(type_: str, message: Union[str, Dict]):
     return dict(AppErrorResponseModel(app_error=ErrorModel(type=type_, message=message)))
 
 
-@logger.inject_lambda_context(log_event=logger.level == logging.DEBUG)
 @lambda_handler_decorator
 def middleware(handler, event, context):
+    logger.inject_lambda_context(log_event=logger.level == logging.DEBUG)(handler)
     try:
         response = handler(event, context)
         logger.debug("Handler Response", extra=response)

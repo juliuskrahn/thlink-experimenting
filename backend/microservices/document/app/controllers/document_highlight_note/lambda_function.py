@@ -35,6 +35,9 @@ def handler(event: Event, context: LambdaContext):
         else:
             highlight.delete_note()
 
+        repository.on_saved_document = lambda saved_document: NotificationManager().document_saved(
+            Response.build(saved_document)
+        )
+
     response = Response.build(highlight.parent)
-    NotificationManager().document_mutated(response)
     return response.dict()

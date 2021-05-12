@@ -26,9 +26,10 @@ def handler(event: Event, context: LambdaContext):
     workspace = Workspace(event.workspace)
     content = Content(event.content_body, event.content_type)
 
+    notification_manager = NotificationManager()
+
     with DocumentRepository.use() as repository:
         links = DocumentChef(repository).prepare_links(workspace, event.links) if event.links else []
-
         document = Document.create(
             workspace,
             event.title,
@@ -37,9 +38,16 @@ def handler(event: Event, context: LambdaContext):
             links,
             highlights=[],
         )
-
         repository.add(document)
 
+        def on_saved_document(saved_document):
+            if saved_document.id == document.id:
+                model = Response.build(saved_document, with_content_body_url=True)
+            else:
+                model = Response.build(saved_document)
+            notification_manager.document_saved(model)
+
+        repository.on_saved_document = on_saved_document
+
     response = Response.build(document, with_content_body_url=True)
-    NotificationManager().document_created(response)
     return response.dict()

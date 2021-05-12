@@ -38,6 +38,9 @@ def handler(event: Event, context: LambdaContext):
             to=chef.order(target_document_id, workspace, target_document_highlight_id),
         )
 
+        repository.on_saved_document = lambda saved_document: NotificationManager().document_saved(
+            Response.build(saved_document)
+        )
+
     response = Response.build(document)
-    NotificationManager().document_mutated(response)
     return response.dict()

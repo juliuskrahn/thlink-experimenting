@@ -1,13 +1,7 @@
 Document Event
 ==============
 
-documentCreated
-^^^^^^^^^^^^^^^
-
-.. autopydantic_model:: app.interface.DocumentModel
-
-
-documentMutated
+documentSaved
 ^^^^^^^^^^^^^^^
 
 .. autopydantic_model:: app.interface.DocumentModel

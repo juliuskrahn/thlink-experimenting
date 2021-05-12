@@ -2,7 +2,7 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.utilities.parser import event_parser
 from domain import lib
 from domain.model.document import Workspace
-from app.repository import DocumentRepository
+from app.repository import DocumentRepository, DocumentRepositoryDocument
 from app.interface import DocumentIdentifierModel
 from app.middleware import middleware
 from app.notification import NotificationManager
@@ -13,7 +13,10 @@ class Event(DocumentIdentifierModel):
 
 
 class Response(DocumentIdentifierModel):
-    pass
+
+    @classmethod
+    def build(cls, document: DocumentRepositoryDocument):
+        return cls(documentId=str(document.id), workspace=str(document.workspace))
 
 
 @middleware
@@ -27,6 +30,9 @@ def handler(event: Event, context: LambdaContext):
         if document:
             document.delete()
 
-    response = Response(documentId=str(document.id), workspace=str(document.workspace))
-    NotificationManager().document_deleted(response)
+        repository.on_deleted_document = lambda deleted_document: NotificationManager().document_deleted(
+            Response.build(deleted_document)
+        )
+
+    response = Response.build(document)
     return response.dict()

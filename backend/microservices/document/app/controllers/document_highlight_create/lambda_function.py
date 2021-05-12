@@ -35,6 +35,9 @@ def handler(event: Event, context: LambdaContext):
             links = chef.prepare_links(workspace, event.links) if event.links else []
             highlight.make_note(note, links)
 
+        repository.on_saved_document = lambda saved_document: NotificationManager().document_saved(
+            Response.build(saved_document)
+        )
+
     response = Response.build(document)
-    NotificationManager().document_mutated(response)
     return response.dict()

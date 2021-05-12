@@ -10,7 +10,7 @@ import aws_cdk.aws_sns as sns
 import aws_cdk.aws_logs as logs
 
 
-class Stack(core.Stack):
+class DocumentServiceStack(core.Stack):
 
     def __init__(self, scope: core.Construct, construct_id: str, **kwargs):
         super().__init__(scope, construct_id, **kwargs)
@@ -48,13 +48,13 @@ class Stack(core.Stack):
                 self,
                 "App",
                 code=lambda_.Code.from_asset("_build/app_layer"),
-                compatible_runtimes=[lambda_.Runtime.PYTHON_3_8()],
+                compatible_runtimes=[lambda_.Runtime.PYTHON_3_8],
             ),
             lambda_.LayerVersion(
                 self,
                 "AWSLambdaPowertools",
                 code=lambda_.Code.from_asset("_build/aws_lambda_powertools_layer"),
-                compatible_runtimes=[lambda_.Runtime.PYTHON_3_8()],
+                compatible_runtimes=[lambda_.Runtime.PYTHON_3_8],
             ),
         ]
 
@@ -167,13 +167,13 @@ class Stack(core.Stack):
 
 class ControllerLambdaFunction(lambda_.Function):
 
-    def __init__(self, scope: Stack, controller_name: str, layers: List[lambda_.LayerVersion]):
+    def __init__(self, scope: DocumentServiceStack, controller_name: str, layers: List[lambda_.LayerVersion]):
         super().__init__(
             scope,
             id=to_camel_case(controller_name),
             code=lambda_.Code.from_asset(f"controllers/{controller_name}"),
             handler="lambda_function.handler",
-            runtime=lambda_.Runtime.PYTHON_3_8(),
+            runtime=lambda_.Runtime.PYTHON_3_8,
             environment={
                 "DocumentEventSNSTopicARN": scope.document_event_sns_topic.topic_arn,
             },

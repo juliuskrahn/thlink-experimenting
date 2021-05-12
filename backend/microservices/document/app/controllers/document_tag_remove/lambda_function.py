@@ -27,6 +27,9 @@ def handler(event: Event, context: LambdaContext):
         document = DocumentChef(repository).order(document_id, workspace)
         document.untag(event.tag)
 
+        repository.on_saved_document = lambda saved_document: NotificationManager().document_saved(
+            Response.build(saved_document)
+        )
+
     response = Response.build(document)
-    NotificationManager().document_mutated(response)
     return response.dict()

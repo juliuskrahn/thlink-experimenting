@@ -26,6 +26,8 @@ def handler(event: Event, context: LambdaContext):
     document_id = lib.Id(event.document_id)
     workspace = Workspace(event.workspace)
 
+    notification_manager = NotificationManager()
+
     try:
 
         with DocumentRepository.use() as repository:
@@ -37,8 +39,16 @@ def handler(event: Event, context: LambdaContext):
             links = chef.prepare_links(workspace, event.links) if event.links else []
             document.update_content(content, links, highlights=[])
 
+            def on_saved_document(saved_document):
+                if saved_document.id == document.id:
+                    model = Response.build(saved_document, with_content_body_url=True)
+                else:
+                    model = Response.build(saved_document)
+                notification_manager.document_saved(model)
+
+            repository.on_saved_document = on_saved_document
+
         response = Response.build(document, with_content_body_url=True)
-        NotificationManager().document_mutated(response)
         return response.dict()
 
     except DocumentContentUpdatedByOtherUserError:

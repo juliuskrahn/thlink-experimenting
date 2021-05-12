@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Generator, ContextManager, Dict, Callable, Union, Tuple
+from typing import List, Generator, ContextManager, Dict, Callable, Union, Tuple, Optional
 import contextlib
 from domain import lib
 from domain.model.document.link import LinkPreview
@@ -21,6 +21,10 @@ class DocumentRepository(AbstractDocumentRepository):
         self._object_storage = object_storage.DocumentRepositoryObjectStorage()
         self._document_factory = DocumentFactory(self)
         self._document_serializer = DocumentSerializer()
+        self._saved_documents = []
+        self._deleted_documents = []
+        self.on_saved_document: Optional[Callable[[DocumentRepositoryDocument], None]] = None
+        self.on_deleted_document: Optional[Callable[[DocumentRepositoryDocument], None]] = None
 
     @classmethod
     @contextlib.contextmanager
@@ -78,20 +82,29 @@ class DocumentRepository(AbstractDocumentRepository):
 
     def _save(self):
         for document in set(self._collect_dirty_documents()):  # deduplicate
-            self._save_document(document)
+            self._process_dirty_document(document)
 
-    def _save_document(self, document: DocumentRepositoryDocument):
+        if self.on_saved_document:
+            for document in self._saved_documents:
+                self.on_saved_document(document)
+        if self.on_deleted_document:
+            for document in self._deleted_documents:
+                self.on_deleted_document(document)
+
+    def _process_dirty_document(self, document: DocumentRepositoryDocument):
         document_loaded = self._documents_loaded_serialized.get((document.id, document.workspace))
         if document.deleted:
             if document_loaded:
                 self._db.delete(db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)))
                 self._object_storage.delete(str(document.id))
+                self._deleted_documents.append(document)
         elif document_loaded and document.version == document_loaded.version:
             self._db.update(
                 key=db.ItemKey("workspace", document.workspace, secondary=db.ItemKey("id", document.id)),
                 item=dict(self._document_serializer.serialize_document(document)),
                 old_item=dict(document_loaded),
             )
+            self._saved_documents.append(document)
         else:
             try:
                 self._db.put(
@@ -103,6 +116,7 @@ class DocumentRepository(AbstractDocumentRepository):
                 raise DocumentContentUpdatedByOtherUserError
             self._object_storage.put(str(document.id), document.content.body)
             # TODO Saga Pattern
+            self._saved_documents.append(document)
 
     def _document_is_dirty(self, document: DocumentRepositoryDocument):
         document_loaded = self._documents_loaded_serialized.get((document.id, document.workspace))
