@@ -1,0 +1,6 @@
+boto3
+aws-lambda-powertools
+sphinx
+autodoc_pydantic
+elasticsearch
+elasticsearch_dsl
