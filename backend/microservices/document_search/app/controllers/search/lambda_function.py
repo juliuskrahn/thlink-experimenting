@@ -4,8 +4,10 @@ from app.interface import SearchEventModel, SearchResponseModel, SearchResponseD
     SearchResponseHighlightModel
 from elasticsearch_dsl.query import Bool, Nested, MultiMatch
 from app.es import AppDocument
+from app.middleware import middleware
 
 
+@middleware
 @event_parser(model=SearchEventModel)
 def handler(event: SearchEventModel, context: LambdaContext):
     # TODO boost based on backlink count

@@ -2,8 +2,10 @@ from aws_lambda_powertools.utilities.parser import event_parser
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from app.interface import DocumentSavedEventModel
 from app.es import AppDocument, AppHighlight
+from app.middleware import middleware
 
 
+@middleware
 @event_parser(model=DocumentSavedEventModel)
 def handler(event: DocumentSavedEventModel, context: LambdaContext):
     highlights = []
