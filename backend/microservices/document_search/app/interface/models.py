@@ -3,6 +3,9 @@ from aws_lambda_powertools.utilities.parser import BaseModel
 from aws_lambda_powertools.utilities.parser.models import SnsModel
 
 
+# Shared
+########
+
 class WorkspaceIdentifierModel(BaseModel):
     workspace: str
 
@@ -10,6 +13,9 @@ class WorkspaceIdentifierModel(BaseModel):
 class DocumentIdentifierModel(WorkspaceIdentifierModel):
     document_id: str
 
+
+# Event
+#######
 
 class LinkModel(BaseModel):
     pass
@@ -41,3 +47,24 @@ class DocumentDeletedEventModel(SnsModel, DocumentIdentifierModel):
 class SearchEventModel(WorkspaceIdentifierModel):
     query: str
     include_highlights = False
+
+
+# Response
+##########
+
+class SearchResponseHighlightModel(BaseModel):
+    id: str
+    link_preview_text: str
+
+
+class SearchResponseDocumentModel(BaseModel):
+    workspace: str
+    id: str
+    title: str
+    tags: List[str]
+    highlights: List[SearchResponseHighlightModel]
+    content_type: str
+
+
+class SearchResponseModel(BaseModel):
+    documents: List[SearchResponseDocumentModel]

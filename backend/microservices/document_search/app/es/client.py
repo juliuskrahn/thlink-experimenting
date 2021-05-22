@@ -3,7 +3,7 @@ from requests_aws4auth import AWS4Auth
 import boto3
 
 
-def get_es_client() -> Elasticsearch:
+def get_client() -> Elasticsearch:
     host = ""
     region = ""
 
@@ -20,3 +20,6 @@ def get_es_client() -> Elasticsearch:
     )
 
     return client
+
+
+client = get_client()
